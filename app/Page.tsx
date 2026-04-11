@@ -1,22 +1,28 @@
-import React from "react";
-
 export default function Home() {
   return (
-    <main style={styles.container}>
-      <h1 style={styles.title}>💪 FitStartPro</h1>
+    <main style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>💪 FitStartPro</h1>
 
-      <p style={styles.subtitle}>
+      <p>
         Tu app de rutinas y nutrición para un estilo de vida saludable
       </p>
 
-      <div style={styles.card}>
-        <h2>🔥 Rutinas</h2>
-        <p>Entrenamientos para todos los niveles</p>
+      <div style={{ marginTop: "20px" }}>
+        <button style={styles.button}>Ver Rutinas</button>
+        <button style={styles.button}>Plan Nutricional</button>
       </div>
+    </main>
+  );
+}
 
-      <div style={styles.card}>
-        <h2>🥗 Nutrición</h2>
-        <p>Planes alimenticios para tus objetivos</p>
-      </div>
-
-      <div style={styles.card
+const styles = {
+  button: {
+    padding: "10px 15px",
+    marginRight: "10px",
+    border: "none",
+    backgroundColor: "#16a34a",
+    color: "white",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+};
