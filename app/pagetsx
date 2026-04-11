@@ -1,0 +1,78 @@
+     1	import React from "react";
+     2	
+     3	export default function Home() {
+...
+    56	    width: "100%",
+    57	    maxWidth: "300px",
+    58	  },
+    59	};
+Tool Call
+Function Name:
+Read
+Arguments:
+file_path:
+/home/user/downloads/page.tsx
+limit:
+300
+offset:
+0
+Response
+     1	import React from "react";
+     2	
+     3	export default function Home() {
+     4	  return (
+     5	    <main style={styles.container}>
+     6	      <h1 style={styles.title}>💪 FitStartPro</h1>
+     7	
+     8	      <p style={styles.subtitle}>
+     9	        Tu app de rutinas y nutrición para un estilo de vida saludable
+    10	      </p>
+    11	
+    12	      <div style={styles.card}>
+    13	        <h2>🔥 Rutinas</h2>
+    14	        <p>Entrenamientos para todos los niveles</p>
+    15	      </div>
+    16	
+    17	      <div style={styles.card}>
+    18	        <h2>🥗 Nutrición</h2>
+    19	        <p>Planes alimenticios para tus objetivos</p>
+    20	      </div>
+    21	
+    22	      <div style={styles.card}>
+    23	        <h2>📈 Progreso</h2>
+    24	        <p>Monitorea tu avance y mejora cada día</p>
+    25	      </div>
+    26	    </main>
+    27	  );
+    28	}
+    29	
+    30	const styles: { [key: string]: React.CSSProperties } = {
+    31	  container: {
+    32	    minHeight: "100vh",
+    33	    display: "flex",
+    34	    flexDirection: "column",
+    35	    alignItems: "center",
+    36	    justifyContent: "center",
+    37	    backgroundColor: "#0f172a",
+    38	    color: "#ffffff",
+    39	    padding: "20px",
+    40	    textAlign: "center",
+    41	  },
+    42	  title: {
+    43	    fontSize: "2.5rem",
+    44	    marginBottom: "10px",
+    45	  },
+    46	  subtitle: {
+    47	    fontSize: "1.2rem",
+    48	    marginBottom: "30px",
+    49	    color: "#94a3b8",
+    50	  },
+    51	  card: {
+    52	    backgroundColor: "#1e293b",
+    53	    padding: "20px",
+    54	    borderRadius: "12px",
+    55	    marginBottom: "15px",
+    56	    width: "100%",
+    57	    maxWidth: "300px",
+    58	  },
+    59	};
