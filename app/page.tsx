@@ -1,77 +1,90 @@
-import React from "react";
+"use client";
+import { useState } from "react";
 
 export default function Home() {
+  const [tab, setTab] = useState("home");
+
   return (
     <main style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>💪 FitStartPro</h1>
-        <p style={styles.subtitle}>
-          Tu app de rutinas y nutrición para un estilo de vida saludable
-        </p>
-
-        <div style={styles.grid}>
-          <div style={styles.box}>🏋️‍♂️ Rutinas</div>
-          <div style={styles.box}>🍎 Nutrición</div>
-          <div style={styles.box}>📊 Progreso</div>
-          <div style={styles.box}>⚙️ Ajustes</div>
-        </div>
-
-        <button style={styles.button}>
-          Empezar entrenamiento 🚀
-        </button>
+        {tab === "home" && <HomeScreen />}
+        {tab === "rutinas" && <RutinasScreen />}
+        {tab === "nutricion" && <NutricionScreen />}
+        {tab === "perfil" && <PerfilScreen />}
       </div>
+
+      <nav style={styles.nav}>
+        <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
+        <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
+        <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
+        <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
+      </nav>
     </main>
   );
 }
 
+// 🔹 Pantallas
+function HomeScreen() {
+  return (
+    <>
+      <h1>💪 FitStartPro</h1>
+      <p>Bienvenido a tu app fitness</p>
+    </>
+  );
+}
+
+function RutinasScreen() {
+  return (
+    <>
+      <h2>🏋️ Rutinas</h2>
+      <p>Próximamente rutinas personalizadas</p>
+    </>
+  );
+}
+
+function NutricionScreen() {
+  return (
+    <>
+      <h2>🍎 Nutrición</h2>
+      <p>Planes de dieta en camino</p>
+    </>
+  );
+}
+
+function PerfilScreen() {
+  return (
+    <>
+      <h2>👤 Perfil</h2>
+      <p>Tu progreso y datos</p>
+    </>
+  );
+}
+
+// 🎨 Estilos
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
+    background: "#0f172a",
     display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, #0f172a, #1e293b)",
-    padding: "20px",
+    flexDirection: "column",
+    justifyContent: "space-between",
   },
   card: {
-    backgroundColor: "#111827",
-    padding: "25px",
-    borderRadius: "20px",
-    width: "100%",
-    maxWidth: "420px",
-    textAlign: "center",
+    padding: "20px",
     color: "white",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+    textAlign: "center",
   },
-  title: {
-    fontSize: "28px",
-    marginBottom: "10px",
+  nav: {
+    display: "flex",
+    justifyContent: "space-around",
+    background: "#111827",
+    padding: "10px 0",
+    borderTop: "1px solid #1f2937",
   },
-  subtitle: {
-    fontSize: "14px",
-    opacity: 0.8,
-    marginBottom: "20px",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "10px",
-    marginBottom: "20px",
-  },
-  box: {
-    backgroundColor: "#1f2937",
-    padding: "15px",
-    borderRadius: "12px",
-    fontSize: "14px",
-  },
-  button: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "12px",
+  navItem: {
+    background: "none",
     border: "none",
-    backgroundColor: "#22c55e",
-    color: "black",
-    fontWeight: "bold",
-    cursor: "pointer",
+    color: "white",
+    fontSize: "20px",
   },
 };
