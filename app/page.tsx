@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-
 export default function Home() {
   const [tab, setTab] = useState("home");
 
