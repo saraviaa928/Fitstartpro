@@ -118,7 +118,6 @@ function RutinasScreen() {
     </div>
   );
 }
-
 function NutricionScreen() {
   return (
     <>
