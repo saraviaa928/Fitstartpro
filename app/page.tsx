@@ -35,6 +35,19 @@ function HomeScreen() {
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
+  // 🔥 Cargar progreso al iniciar
+  useEffect(() => {
+    const data = localStorage.getItem("progreso");
+    if (data) {
+      setCompletados(JSON.parse(data));
+    }
+  }, []);
+
+  // 🔥 Guardar progreso cuando cambia
+  useEffect(() => {
+    localStorage.setItem("progreso", JSON.stringify(completados));
+  }, [completados]);
+
   const rutinas = [
     {
       dia: "Día 1 - Pecho y Tríceps",
