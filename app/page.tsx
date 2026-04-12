@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function Home() {
   return (
     <main style={styles.container}>
@@ -8,18 +10,10 @@ export default function Home() {
         </p>
 
         <div style={styles.grid}>
-          <div style={styles.box}>
-            🏋️‍♂️ Rutinas
-          </div>
-          <div style={styles.box}>
-            🍎 Nutrición
-          </div>
-          <div style={styles.box}>
-            📊 Progreso
-          </div>
-          <div style={styles.box}>
-            ⚙️ Ajustes
-          </div>
+          <div style={styles.box}>🏋️‍♂️ Rutinas</div>
+          <div style={styles.box}>🍎 Nutrición</div>
+          <div style={styles.box}>📊 Progreso</div>
+          <div style={styles.box}>⚙️ Ajustes</div>
         </div>
 
         <button style={styles.button}>
@@ -30,7 +24,7 @@ export default function Home() {
   );
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
     display: "flex",
