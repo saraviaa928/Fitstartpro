@@ -71,7 +71,7 @@ function RutinasScreen() {
       "Elevaciones laterales - 3x12",
       "Elevaciones frontales - 3x12",
       "Pájaros - 3x12",
-      "Encogimientos - 3x15"
+      "Encogimientos - 3x15",
       ],
     },
   ];
