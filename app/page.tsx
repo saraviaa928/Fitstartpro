@@ -97,7 +97,6 @@ function RutinasScreen() {
   return (
     <>
       <h2>🏋️ Rutinas</h2>
-      <p>Próximamente rutinas personalizadas</p>
     </>
   );
 }
