@@ -71,28 +71,7 @@ function RutinasScreen() {
       "Elevaciones laterales - 3x12",
       "Elevaciones frontales - 3x12",
       "Pájaros - 3x12",
-      "Encogimientos - 3x15",
-    ],
-  },
-];
-    {
-      dia: "Día 1 - Pecho y Tríceps",
-      ejercicios: [
-        "Press banca - 4x10",
-        "Press inclinado - 3x10",
-        "Aperturas - 3x12",
-        "Fondos - 3x10",
-        "Tríceps - 3x12",
-      ],
-    },
-    {
-      dia: "Día 2 - Espalda y Bíceps",
-      ejercicios: [
-        "Dominadas - 4x8",
-        "Remo con barra - 4x10",
-        "Jalón al pecho - 3x12",
-        "Curl de bíceps - 3x12",
-        "Curl martillo - 3x10",
+      "Encogimientos - 3x15"
       ],
     },
   ];
