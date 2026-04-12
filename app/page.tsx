@@ -87,4 +87,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "white",
     fontSize: "20px",
   },
-};
+};rutinaCard: {
+  backgroundColor: "#1f2937",
+  padding: "15px",
+  borderRadius: "12px",
+  marginBottom: "15px",
+},
