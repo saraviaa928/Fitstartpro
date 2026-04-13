@@ -1,36 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+
+// ⚠️ IMPORTANTE: protegemos Firebase
+let auth: any = null;
+let db: any = null;
+
+try {
+  const firebase = require("../lib/firebase");
+  auth = firebase.auth;
+  db = firebase.db;
+} catch (e) {
+  console.log("Firebase no cargó:", e);
+}
 
 export default function Home() {
   const [tab, setTab] = useState("home");
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 🔐 Detectar usuario
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    if (!auth) {
+      setError("Firebase no está configurado correctamente");
+    }
   }, []);
 
-  // 🔥 Evita pantalla blanca
-  if (loading) {
-    return <p style={{ color: "white" }}>Cargando...</p>;
-  }
-
-  // 🔐 Si no hay usuario
-  if (!user) {
+  // 🔥 SI HAY ERROR → mostrarlo (evita pantalla blanca)
+  if (error) {
     return (
-      <div style={styles.center}>
-        <h2>🔐 Inicia sesión</h2>
-        <p>Debes iniciar sesión para usar la app</p>
+      <div style={{ color: "white", padding: 20 }}>
+        <h2>⚠️ Error</h2>
+        <p>{error}</p>
+        <p>Revisa tu archivo /lib/firebase.ts</p>
       </div>
     );
   }
@@ -39,16 +39,16 @@ export default function Home() {
     <main style={styles.container}>
       <div style={styles.card}>
         {tab === "home" && <HomeScreen />}
-        {tab === "rutinas" && <RutinasScreen user={user} />}
+        {tab === "rutinas" && <RutinasScreen />}
         {tab === "nutricion" && <NutricionScreen />}
-        {tab === "perfil" && <PerfilScreen user={user} />}
+        {tab === "perfil" && <PerfilScreen />}
       </div>
 
       <nav style={styles.nav}>
-        <button onClick={() => setTab("home")} style={{ ...styles.navItem, color: tab === "home" ? "#22c55e" : "white" }}>🏠</button>
-        <button onClick={() => setTab("rutinas")} style={{ ...styles.navItem, color: tab === "rutinas" ? "#22c55e" : "white" }}>🏋️</button>
-        <button onClick={() => setTab("nutricion")} style={{ ...styles.navItem, color: tab === "nutricion" ? "#22c55e" : "white" }}>🍎</button>
-        <button onClick={() => setTab("perfil")} style={{ ...styles.navItem, color: tab === "perfil" ? "#22c55e" : "white" }}>👤</button>
+        <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
+        <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
+        <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
+        <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
       </nav>
     </main>
   );
@@ -59,63 +59,40 @@ function HomeScreen() {
   return (
     <>
       <h1>💪 FitStartPro</h1>
-      <p>Tu progreso fitness en una sola app</p>
+      <p>Bienvenido</p>
     </>
   );
 }
 
-// 🏋️ RUTINAS
-function RutinasScreen({ user }: any) {
+// 🏋️ RUTINAS (SIN FIREBASE PARA EVITAR CRASH)
+function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
-  // 🔥 Cargar desde Firebase
   useEffect(() => {
-    const cargar = async () => {
-      try {
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
+    try {
+      const data = localStorage.getItem("progreso");
+      if (data) setCompletados(JSON.parse(data));
+    } catch (e) {
+      console.log("Error localStorage:", e);
+    }
+  }, []);
 
-        if (snap.exists()) {
-          setCompletados(snap.data().progreso || []);
-        }
-      } catch (error) {
-        console.log("Error cargando progreso:", error);
-      }
-    };
-
-    cargar();
-  }, [user]);
-
-  // 🔥 Guardar en Firebase
   useEffect(() => {
-    const guardar = async () => {
-      try {
-        const ref = doc(db, "usuarios", user.uid);
-        await setDoc(ref, { progreso: completados }, { merge: true });
-      } catch (error) {
-        console.log("Error guardando progreso:", error);
-      }
-    };
-
-    guardar();
-  }, [completados, user]);
+    try {
+      localStorage.setItem("progreso", JSON.stringify(completados));
+    } catch (e) {
+      console.log("Error guardando:", e);
+    }
+  }, [completados]);
 
   const rutinas = [
     {
-      dia: "Día 1 - Pecho",
-      ejercicios: ["Press banca", "Press inclinado", "Fondos"],
+      dia: "Día 1",
+      ejercicios: ["Press", "Fondos"],
     },
     {
-      dia: "Día 2 - Espalda",
-      ejercicios: ["Dominadas", "Remo", "Jalón"],
-    },
-    {
-      dia: "Día 3 - Pierna",
-      ejercicios: ["Sentadilla", "Prensa", "Peso muerto"],
-    },
-    {
-      dia: "Día 4 - Hombro",
-      ejercicios: ["Press militar", "Laterales", "Pájaros"],
+      dia: "Día 2",
+      ejercicios: ["Dominadas", "Remo"],
     },
   ];
 
@@ -127,18 +104,9 @@ function RutinasScreen({ user }: any) {
     }
   };
 
-  const totalEjercicios = rutinas.reduce((acc, r) => acc + r.ejercicios.length, 0);
-  const progresoGlobal = Math.round((completados.length / totalEjercicios) * 100);
-
   return (
     <div style={{ textAlign: "left" }}>
       <h2>🏋️ Rutinas</h2>
-
-      {/* 🔥 PROGRESO GLOBAL */}
-      <div style={styles.progressBar}>
-        <div style={{ ...styles.progressFill, width: `${progresoGlobal}%` }} />
-      </div>
-      <p>{progresoGlobal}% progreso total</p>
 
       {rutinas.map((r, i) => (
         <div key={i} style={styles.rutinaCard}>
@@ -167,27 +135,17 @@ function RutinasScreen({ user }: any) {
   );
 }
 
-// 🍎 NUTRICIÓN
+// 🍎
 function NutricionScreen() {
-  return (
-    <>
-      <h2>🍎 Nutrición</h2>
-      <p>Próximamente</p>
-    </>
-  );
+  return <h2>🍎 Nutrición</h2>;
 }
 
-// 👤 PERFIL
-function PerfilScreen({ user }: any) {
-  return (
-    <>
-      <h2>👤 Perfil</h2>
-      <p>{user?.email}</p>
-    </>
-  );
+// 👤
+function PerfilScreen() {
+  return <h2>👤 Perfil</h2>;
 }
 
-// 🎨 ESTILOS
+// 🎨
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
@@ -210,6 +168,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   navItem: {
     background: "none",
     border: "none",
+    color: "white",
     fontSize: "20px",
   },
   rutinaCard: {
@@ -217,22 +176,5 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "15px",
     borderRadius: "12px",
     marginBottom: "15px",
-  },
-  progressBar: {
-    width: "100%",
-    height: "8px",
-    backgroundColor: "#374151",
-    borderRadius: "10px",
-    overflow: "hidden",
-    marginBottom: "5px",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-  },
-  center: {
-    color: "white",
-    textAlign: "center",
-    marginTop: "50px",
   },
 };
