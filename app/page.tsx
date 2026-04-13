@@ -15,13 +15,20 @@ export default function Home() {
 
       <nav style={styles.nav}>
   <button
-    onClick={() => setTab("home")}
-    style={styles.navItem}
-    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-    onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
-  >
-    🏠
-  </button>
+  onClick={() => setTab("home")}
+  style={{
+    ...styles.navItem,
+    color: tab === "home" ? "#22c55e" : "white",
+    transform: tab === "home" ? "scale(1.2)" : "scale(1)",
+  }}
+  onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+  onTouchEnd={(e) =>
+    (e.currentTarget.style.transform =
+      tab === "home" ? "scale(1.2)" : "scale(1)")
+  }
+>
+  🏠
+</button>
 
   <button
     onClick={() => setTab("rutinas")}
