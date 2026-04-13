@@ -242,6 +242,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "none",
     color: "white",
     fontSize: "20px",
+    transition: "transform 0.2s",
   },
 
   rutinaCard: {
