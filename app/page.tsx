@@ -14,19 +14,11 @@ export default function Home() {
       </div>
 
       <nav style={styles.nav}>
-        <button
-  onClick={() => setTab("home")}
-  style={styles.navItem}
-  onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-  onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
->
-  🏠
-</button>
-        <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
-        <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
-        <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
-      </nav>
-    </main>
+  <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
+  <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
+  <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
+  <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
+</nav>
   );
 }
 
