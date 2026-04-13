@@ -1,3 +1,8 @@
+export const metadata = {
+  title: "FitStartPro",
+  description: "App fitness",
+};
+
 export default function RootLayout({
   children,
 }: {
