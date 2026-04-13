@@ -68,31 +68,63 @@ function HomeScreen() {
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
+  // 🔥 Import dinámico seguro (NO rompe la app)
+  const [db, setDb] = useState<any>(null);
+
   useEffect(() => {
     try {
-      const data = localStorage.getItem("progreso");
-      if (data) setCompletados(JSON.parse(data));
+      const firebase = require("../lib/firebase");
+      setDb(firebase.db);
     } catch (e) {
-      console.log("Error localStorage:", e);
+      console.log("Firebase no cargó:", e);
     }
   }, []);
 
+  // 🔥 Cargar desde local primero (siempre funciona)
   useEffect(() => {
-    try {
-      localStorage.setItem("progreso", JSON.stringify(completados));
-    } catch (e) {
-      console.log("Error guardando:", e);
-    }
+    const data = localStorage.getItem("progreso");
+    if (data) setCompletados(JSON.parse(data));
+  }, []);
+
+  // 🔥 Guardar SIEMPRE en local (backup)
+  useEffect(() => {
+    localStorage.setItem("progreso", JSON.stringify(completados));
   }, [completados]);
+
+  // 🔥 Guardar en Firebase SOLO si existe
+  useEffect(() => {
+    if (!db) return;
+
+    const guardar = async () => {
+      try {
+        const { doc, setDoc } = require("firebase/firestore");
+        await setDoc(doc(db, "demo", "user1"), {
+          progreso: completados,
+        });
+      } catch (e) {
+        console.log("Error Firebase:", e);
+      }
+    };
+
+    guardar();
+  }, [completados, db]);
 
   const rutinas = [
     {
-      dia: "Día 1",
-      ejercicios: ["Press", "Fondos"],
+      dia: "Día 1 - Pecho",
+      ejercicios: ["Press banca", "Fondos"],
     },
     {
-      dia: "Día 2",
+      dia: "Día 2 - Espalda",
       ejercicios: ["Dominadas", "Remo"],
+    },
+    {
+      dia: "Día 3 - Pierna",
+      ejercicios: ["Sentadilla", "Prensa"],
+    },
+    {
+      dia: "Día 4 - Hombro",
+      ejercicios: ["Press militar", "Laterales"],
     },
   ];
 
@@ -104,9 +136,18 @@ function RutinasScreen() {
     }
   };
 
+  const total = rutinas.reduce((acc, r) => acc + r.ejercicios.length, 0);
+  const progreso = Math.round((completados.length / total) * 100);
+
   return (
     <div style={{ textAlign: "left" }}>
       <h2>🏋️ Rutinas</h2>
+
+      {/* 🔥 progreso global */}
+      <div style={styles.progressBar}>
+        <div style={{ ...styles.progressFill, width: `${progreso}%` }} />
+      </div>
+      <p>{progreso}% completado</p>
 
       {rutinas.map((r, i) => (
         <div key={i} style={styles.rutinaCard}>
