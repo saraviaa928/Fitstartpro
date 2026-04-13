@@ -37,11 +37,19 @@ function RutinasScreen() {
 
   // 🔥 Cargar progreso al iniciar
   useEffect(() => {
+  if (typeof window !== "undefined") {
     const data = localStorage.getItem("progreso");
     if (data) {
       setCompletados(JSON.parse(data));
     }
-  }, []);
+  }
+}, []);
+
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("progreso", JSON.stringify(completados));
+  }
+}, [completados]);
 
   // 🔥 Guardar progreso cuando cambia
   useEffect(() => {
