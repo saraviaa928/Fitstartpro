@@ -1,5 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect(() => {
+  if (typeof window !== "undefined") {
+    const data = localStorage.getItem("progreso");
+    if (data) {
+      setCompletados(JSON.parse(data));
+    }
+  }
+}, []);
+
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("progreso", JSON.stringify(completados));
+  }
+}, [completados]);
 
 export default function Home() {
   const [tab, setTab] = useState("home");
