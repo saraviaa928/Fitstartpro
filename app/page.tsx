@@ -14,17 +14,31 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Home() {
   const [tab, setTab] = useState("home");
-  const [user, setUser] = useState<any>(null);
 
-  // 🔐 Detectar usuario automáticamente
+  // 🔥 IMPORTANTE (solución pantalla blanca)
+  const [user, setUser] = useState<any>(undefined);
+
+  // 🔐 Detectar usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
     });
+
     return () => unsubscribe();
   }, []);
 
-  // 🔒 Si no hay usuario → login
+  // 🔥 Loading (evita pantalla blanca)
+  if (user === undefined) {
+    return (
+      <main style={styles.container}>
+        <p style={{ color: "white", textAlign: "center" }}>
+          Cargando...
+        </p>
+      </main>
+    );
+  }
+
+  // 🔐 Si no hay usuario → login
   if (!user) return <LoginScreen />;
 
   return (
@@ -53,11 +67,19 @@ function LoginScreen() {
   const [password, setPassword] = useState("");
 
   const login = async () => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert("Error al iniciar sesión");
+    }
   };
 
   const register = async () => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      alert("Error al registrarse");
+    }
   };
 
   return (
@@ -79,8 +101,13 @@ function LoginScreen() {
         style={styles.input}
       />
 
-      <button onClick={login} style={styles.button}>Iniciar sesión</button>
-      <button onClick={register} style={styles.button}>Registrarse</button>
+      <button onClick={login} style={styles.button}>
+        Iniciar sesión
+      </button>
+
+      <button onClick={register} style={styles.button}>
+        Registrarse
+      </button>
     </div>
   );
 }
@@ -98,7 +125,7 @@ function HomeScreen() {
 }
 
 //////////////////////////////////////
-// 🏋️ RUTINAS (CON FIREBASE)
+// 🏋️ RUTINAS
 //////////////////////////////////////
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
@@ -114,7 +141,7 @@ function RutinasScreen() {
     },
   ];
 
-  // 🔥 CARGAR DESDE FIREBASE
+  // 🔥 Cargar desde Firebase
   useEffect(() => {
     const cargar = async () => {
       if (!auth.currentUser) return;
@@ -130,14 +157,16 @@ function RutinasScreen() {
     cargar();
   }, []);
 
-  // 🔥 GUARDAR EN FIREBASE
+  // 🔥 Guardar en Firebase
   useEffect(() => {
     const guardar = async () => {
       if (!auth.currentUser) return;
 
-      await setDoc(doc(db, "usuarios", auth.currentUser.uid), {
-        progreso: completados,
-      }, { merge: true });
+      await setDoc(
+        doc(db, "usuarios", auth.currentUser.uid),
+        { progreso: completados },
+        { merge: true }
+      );
     };
 
     guardar();
@@ -185,7 +214,7 @@ function RutinasScreen() {
 }
 
 //////////////////////////////////////
-// 👤 PERFIL (GUARDADO EN FIREBASE)
+// 👤 PERFIL
 //////////////////////////////////////
 function PerfilScreen() {
   const [peso, setPeso] = useState("");
@@ -194,12 +223,13 @@ function PerfilScreen() {
   const guardarPerfil = async () => {
     if (!auth.currentUser) return;
 
-    await setDoc(doc(db, "usuarios", auth.currentUser.uid), {
-      peso,
-      meta,
-    }, { merge: true });
+    await setDoc(
+      doc(db, "usuarios", auth.currentUser.uid),
+      { peso, meta },
+      { merge: true }
+    );
 
-    alert("Guardado ✅");
+    alert("Perfil guardado ✅");
   };
 
   return (
