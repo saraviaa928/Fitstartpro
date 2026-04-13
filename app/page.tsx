@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 
+// 🔥 Firebase seguro
 let auth: any = null;
-let db: any = null;
 
 try {
   const firebase = require("../lib/firebase");
   auth = firebase.auth;
-  db = firebase.db;
 } catch (e) {
-  console.log("Firebase error:", e);
+  console.log("Firebase no disponible");
 }
 
 export default function Home() {
@@ -18,22 +17,27 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) return;
-
-    const { onAuthStateChanged } = require("firebase/auth");
-
-    const unsub = onAuthStateChanged(auth, (u: any) => {
-      setUser(u);
+    if (!auth) {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => unsub();
+    import("firebase/auth").then(({ onAuthStateChanged }) => {
+      const unsub = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setLoading(false);
+      });
+
+      return () => unsub();
+    });
   }, []);
 
+  // 🔥 Nunca pantalla blanca
   if (loading) {
     return <p style={{ color: "white" }}>Cargando...</p>;
   }
 
+  // 🔐 LOGIN
   if (!user) {
     return <AuthScreen setUser={setUser} />;
   }
@@ -42,7 +46,7 @@ export default function Home() {
 }
 
 //////////////////////////////////////////////////
-// 🔐 LOGIN / REGISTER
+// 🔐 LOGIN SEGURO
 //////////////////////////////////////////////////
 
 function AuthScreen({ setUser }: any) {
@@ -51,21 +55,23 @@ function AuthScreen({ setUser }: any) {
 
   const login = async () => {
     try {
-      const { signInWithEmailAndPassword } = require("firebase/auth");
+      const { signInWithEmailAndPassword } = await import("firebase/auth");
       const res = await signInWithEmailAndPassword(auth, email, password);
       setUser(res.user);
     } catch (e) {
       alert("Error login");
+      console.log(e);
     }
   };
 
   const register = async () => {
     try {
-      const { createUserWithEmailAndPassword } = require("firebase/auth");
+      const { createUserWithEmailAndPassword } = await import("firebase/auth");
       const res = await createUserWithEmailAndPassword(auth, email, password);
       setUser(res.user);
     } catch (e) {
       alert("Error registro");
+      console.log(e);
     }
   };
 
@@ -90,19 +96,21 @@ function AuthScreen({ setUser }: any) {
 
       <button onClick={login} style={styles.button}>Login</button>
       <button onClick={register} style={styles.button}>Registrarse</button>
+
+      {!auth && <p style={{ marginTop: 20 }}>⚠️ Firebase no configurado</p>}
     </div>
   );
 }
 
 //////////////////////////////////////////////////
-// 📱 APP PRINCIPAL
+// 📱 APP
 //////////////////////////////////////////////////
 
 function App({ user }: any) {
   const [tab, setTab] = useState("home");
 
   const logout = async () => {
-    const { signOut } = require("firebase/auth");
+    const { signOut } = await import("firebase/auth");
     await signOut(auth);
   };
 
@@ -110,7 +118,7 @@ function App({ user }: any) {
     <main style={styles.container}>
       <div style={styles.card}>
         {tab === "home" && <HomeScreen />}
-        {tab === "rutinas" && <RutinasScreen user={user} />}
+        {tab === "rutinas" && <RutinasScreen />}
         {tab === "perfil" && <PerfilScreen user={user} logout={logout} />}
       </div>
 
@@ -132,51 +140,24 @@ function HomeScreen() {
 }
 
 //////////////////////////////////////////////////
-// 🏋️ RUTINAS CON FIREBASE
+// 🏋️ RUTINAS (LOCAL SAFE)
 //////////////////////////////////////////////////
 
-function RutinasScreen({ user }: any) {
+function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
   useEffect(() => {
-    const cargar = async () => {
-      try {
-        const { doc, getDoc } = require("firebase/firestore");
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          setCompletados(snap.data().progreso || []);
-        }
-      } catch (e) {
-        console.log("Error cargar:", e);
-      }
-    };
-
-    cargar();
-  }, [user]);
+    const data = localStorage.getItem("progreso");
+    if (data) setCompletados(JSON.parse(data));
+  }, []);
 
   useEffect(() => {
-    const guardar = async () => {
-      try {
-        const { doc, setDoc } = require("firebase/firestore");
-        await setDoc(
-          doc(db, "usuarios", user.uid),
-          { progreso: completados },
-          { merge: true }
-        );
-      } catch (e) {
-        console.log("Error guardar:", e);
-      }
-    };
-
-    guardar();
-  }, [completados, user]);
+    localStorage.setItem("progreso", JSON.stringify(completados));
+  }, [completados]);
 
   const rutinas = [
     { dia: "Día 1", ejercicios: ["Press", "Fondos"] },
     { dia: "Día 2", ejercicios: ["Dominadas", "Remo"] },
-    { dia: "Día 3", ejercicios: ["Pierna", "Prensa"] },
   ];
 
   const toggle = (ej: string) => {
@@ -224,7 +205,7 @@ function PerfilScreen({ user, logout }: any) {
   return (
     <div>
       <h2>👤 Perfil</h2>
-      <p>{user.email}</p>
+      <p>{user?.email}</p>
       <button onClick={logout} style={styles.button}>
         Cerrar sesión
       </button>
