@@ -124,7 +124,8 @@ function RutinasScreen() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("progreso", JSON.stringify(completados));
+    import { doc, setDoc, getDoc } from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
   }, [completados]);
 
   const rutinas = [
