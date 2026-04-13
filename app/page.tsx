@@ -16,40 +16,28 @@ export default function Home() {
       <nav style={styles.nav}>
         <button
           onClick={() => setTab("home")}
-          style={{
-            ...styles.navItem,
-            color: tab === "home" ? "#22c55e" : "white",
-          }}
+          style={{ ...styles.navItem, color: tab === "home" ? "#22c55e" : "white" }}
         >
           🏠
         </button>
 
         <button
           onClick={() => setTab("rutinas")}
-          style={{
-            ...styles.navItem,
-            color: tab === "rutinas" ? "#22c55e" : "white",
-          }}
+          style={{ ...styles.navItem, color: tab === "rutinas" ? "#22c55e" : "white" }}
         >
           🏋️
         </button>
 
         <button
           onClick={() => setTab("nutricion")}
-          style={{
-            ...styles.navItem,
-            color: tab === "nutricion" ? "#22c55e" : "white",
-          }}
+          style={{ ...styles.navItem, color: tab === "nutricion" ? "#22c55e" : "white" }}
         >
           🍎
         </button>
 
         <button
           onClick={() => setTab("perfil")}
-          style={{
-            ...styles.navItem,
-            color: tab === "perfil" ? "#22c55e" : "white",
-          }}
+          style={{ ...styles.navItem, color: tab === "perfil" ? "#22c55e" : "white" }}
         >
           👤
         </button>
@@ -58,27 +46,47 @@ export default function Home() {
   );
 }
 
-// 🏠 Home
+// 🏠 HOME
 function HomeScreen() {
   return (
     <>
       <h1>💪 FitStartPro</h1>
       <p>Bienvenido a tu app fitness</p>
+
+      <button style={styles.proButton}>
+        🚀 Obtener versión PRO
+      </button>
     </>
   );
 }
 
-// 🏋️ Rutinas
+// 🏋️ RUTINAS
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
+  const [racha, setRacha] = useState(0);
 
+  // 🔥 Cargar datos
   useEffect(() => {
     const data = localStorage.getItem("progreso");
     if (data) setCompletados(JSON.parse(data));
+
+    const r = localStorage.getItem("racha");
+    if (r) setRacha(parseInt(r));
   }, []);
 
+  // 🔥 Guardar progreso + racha
   useEffect(() => {
     localStorage.setItem("progreso", JSON.stringify(completados));
+
+    const hoy = new Date().toDateString();
+    const ultimaFecha = localStorage.getItem("ultima_fecha");
+
+    if (ultimaFecha !== hoy && completados.length > 0) {
+      const nuevaRacha = racha + 1;
+      setRacha(nuevaRacha);
+      localStorage.setItem("racha", nuevaRacha.toString());
+      localStorage.setItem("ultima_fecha", hoy);
+    }
   }, [completados]);
 
   const rutinas = [
@@ -124,6 +132,18 @@ function RutinasScreen() {
     },
   ];
 
+  // 🔥 PROGRESO GLOBAL
+  const totalEjercicios = rutinas.reduce(
+    (acc, r) => acc + r.ejercicios.length,
+    0
+  );
+
+  const totalCompletados = completados.length;
+
+  const progresoGlobal = Math.round(
+    (totalCompletados / totalEjercicios) * 100
+  );
+
   const toggleEjercicio = (ejercicio: string) => {
     if (completados.includes(ejercicio)) {
       setCompletados(completados.filter((e) => e !== ejercicio));
@@ -136,119 +156,22 @@ function RutinasScreen() {
     <div style={{ textAlign: "left" }}>
       <h2>🏋️ Rutinas</h2>
 
+      {/* 🔥 PROGRESO GLOBAL */}
+      <div style={styles.globalCard}>
+        <p>Progreso total</p>
+
+        <div style={styles.progressBar}>
+          <div
+            style={{
+              ...styles.progressFill,
+              width: `${progresoGlobal}%`,
+            }}
+          />
+        </div>
+
+        <p>{progresoGlobal}% completado</p>
+        <p style={{ color: "#facc15" }}>🔥 Racha: {racha} días</p>
+      </div>
+
       {rutinas.map((rutina, index) => {
-        const completadosDia = rutina.ejercicios.filter((e) =>
-          completados.includes(e)
-        ).length;
-
-        const total = rutina.ejercicios.length;
-        const porcentaje = Math.round((completadosDia / total) * 100);
-
-        return (
-          <div key={index} style={styles.rutinaCard}>
-            <h3>{rutina.dia}</h3>
-
-            {/* 🔥 Barra de progreso */}
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  ...styles.progressFill,
-                  width: `${porcentaje}%`,
-                }}
-              />
-            </div>
-
-            <p style={{ fontSize: "12px" }}>
-              {porcentaje}% completado
-            </p>
-
-            <ul>
-              {rutina.ejercicios.map((ejercicio, i) => {
-                const isDone = completados.includes(ejercicio);
-
-                return (
-                  <li
-                    key={i}
-                    onClick={() => toggleEjercicio(ejercicio)}
-                    style={{
-                      cursor: "pointer",
-                      textDecoration: isDone ? "line-through" : "none",
-                      color: isDone ? "#22c55e" : "white",
-                    }}
-                  >
-                    {isDone ? "✅ " : ""}{ejercicio}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// 🍎 Nutrición
-function NutricionScreen() {
-  return (
-    <>
-      <h2>🍎 Nutrición</h2>
-      <p>Planes próximamente</p>
-    </>
-  );
-}
-
-// 👤 Perfil
-function PerfilScreen() {
-  return (
-    <>
-      <h2>👤 Perfil</h2>
-      <p>Tu progreso</p>
-    </>
-  );
-}
-
-// 🎨 Estilos
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    minHeight: "100vh",
-    background: "#0f172a",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  },
-  card: {
-    padding: "20px",
-    color: "white",
-    textAlign: "center",
-  },
-  nav: {
-    display: "flex",
-    justifyContent: "space-around",
-    background: "#111827",
-    padding: "10px 0",
-  },
-  navItem: {
-    background: "none",
-    border: "none",
-    fontSize: "20px",
-  },
-  rutinaCard: {
-    backgroundColor: "#1f2937",
-    padding: "15px",
-    borderRadius: "12px",
-    marginBottom: "15px",
-  },
-  progressBar: {
-    width: "100%",
-    height: "8px",
-    backgroundColor: "#374151",
-    borderRadius: "10px",
-    overflow: "hidden",
-    marginBottom: "5px",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-  },
-};
+        const completados
