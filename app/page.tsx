@@ -14,10 +14,41 @@ export default function Home() {
       </div>
 
       <nav style={styles.nav}>
-  <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
-  <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
-  <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
-  <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
+  <button
+    onClick={() => setTab("home")}
+    style={styles.navItem}
+    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+    onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
+  >
+    🏠
+  </button>
+
+  <button
+    onClick={() => setTab("rutinas")}
+    style={styles.navItem}
+    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+    onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
+  >
+    🏋️
+  </button>
+
+  <button
+    onClick={() => setTab("nutricion")}
+    style={styles.navItem}
+    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+    onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
+  >
+    🍎
+  </button>
+
+  <button
+    onClick={() => setTab("perfil")}
+    style={styles.navItem}
+    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+    onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
+  >
+    👤
+  </button>
 </nav>
   );
 }
