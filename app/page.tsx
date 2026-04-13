@@ -58,23 +58,27 @@ export default function Home() {
   );
 }
 
+// 🏠 Home
+function HomeScreen() {
+  return (
+    <>
+      <h1>💪 FitStartPro</h1>
+      <p>Bienvenido a tu app fitness</p>
+    </>
+  );
+}
+
 // 🏋️ Rutinas
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
-  // 🔥 Cargar progreso
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem("progreso");
-      if (data) setCompletados(JSON.parse(data));
-    }
+    const data = localStorage.getItem("progreso");
+    if (data) setCompletados(JSON.parse(data));
   }, []);
 
-  // 🔥 Guardar progreso
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("progreso", JSON.stringify(completados));
-    }
+    localStorage.setItem("progreso", JSON.stringify(completados));
   }, [completados]);
 
   const rutinas = [
@@ -83,9 +87,7 @@ function RutinasScreen() {
       ejercicios: [
         "Press banca - 4x10",
         "Press inclinado - 3x10",
-        "Aperturas con mancuernas - 3x12",
-        "Fondos - 3x10",
-        "Extensión de tríceps - 3x12",
+        "Aperturas - 3x12",
       ],
     },
     {
@@ -93,29 +95,7 @@ function RutinasScreen() {
       ejercicios: [
         "Dominadas - 4x8",
         "Remo con barra - 4x10",
-        "Jalón al pecho - 3x12",
-        "Curl de bíceps - 3x12",
-        "Curl martillo - 3x10",
-      ],
-    },
-    {
-      dia: "Día 3 - Pierna",
-      ejercicios: [
-        "Sentadillas - 4x10",
-        "Prensa - 4x12",
-        "Peso muerto - 3x10",
-        "Extensión de pierna - 3x12",
-        "Pantorrillas - 4x15",
-      ],
-    },
-    {
-      dia: "Día 4 - Hombro",
-      ejercicios: [
-        "Press militar - 4x10",
-        "Elevaciones laterales - 3x12",
-        "Elevaciones frontales - 3x12",
-        "Pájaros - 3x12",
-        "Encogimientos - 3x15",
+        "Curl bíceps - 3x12",
       ],
     },
   ];
@@ -144,7 +124,6 @@ function RutinasScreen() {
           <div key={index} style={styles.rutinaCard}>
             <h3>{rutina.dia}</h3>
 
-            {/* 🔥 Barra */}
             <div style={styles.progressBar}>
               <div
                 style={{
@@ -154,7 +133,7 @@ function RutinasScreen() {
               />
             </div>
 
-            <p style={{ fontSize: "12px", marginBottom: "10px" }}>
+            <p style={{ fontSize: "12px" }}>
               {porcentaje}% completado
             </p>
 
@@ -167,13 +146,9 @@ function RutinasScreen() {
                     key={i}
                     onClick={() => toggleEjercicio(ejercicio)}
                     style={{
-  cursor: "pointer",
-  textDecoration: isDone ? "line-through" : "none",
-  color: isDone ? "#22c55e" : "white",
-  transition: "all 0.3s ease",
-  transform: isDone ? "scale(1.02)" : "scale(1)",
-}}
-                      marginBottom: "5px",
+                      cursor: "pointer",
+                      textDecoration: isDone ? "line-through" : "none",
+                      color: isDone ? "#22c55e" : "white",
                     }}
                   >
                     {isDone ? "✅ " : ""}{ejercicio}
@@ -193,7 +168,7 @@ function NutricionScreen() {
   return (
     <>
       <h2>🍎 Nutrición</h2>
-      <p>Planes de dieta en camino</p>
+      <p>Planes próximamente</p>
     </>
   );
 }
@@ -203,12 +178,12 @@ function PerfilScreen() {
   return (
     <>
       <h2>👤 Perfil</h2>
-      <p>Tu progreso y datos</p>
+      <p>Tu progreso</p>
     </>
   );
 }
 
-// 🎨 ESTILOS
+// 🎨 Estilos
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
@@ -217,48 +192,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     justifyContent: "space-between",
   },
-
   card: {
     padding: "20px",
     color: "white",
     textAlign: "center",
   },
-
   nav: {
     display: "flex",
     justifyContent: "space-around",
     background: "#111827",
     padding: "10px 0",
-    borderTop: "1px solid #1f2937",
   },
-
   navItem: {
     background: "none",
     border: "none",
-    color: "white",
     fontSize: "20px",
-    transition: "transform 0.2s",
   },
-
   rutinaCard: {
     backgroundColor: "#1f2937",
     padding: "15px",
     borderRadius: "12px",
     marginBottom: "15px",
   },
-
-  // 🔥 Barra de progreso
   progressBar: {
     width: "100%",
-    height: "8px",
-    backgroundColor: "#374151",
-    borderRadius: "10px",
-    overflow: "hidden",
-    marginBottom: "5px",
-  },
-
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-  },
-};
+    height: "
