@@ -184,45 +184,46 @@ function PerfilScreen() {
 }
 
 // 🎨 Estilos
-const rutinas = [
-  {
-    dia: "Día 1 - Pecho y Tríceps",
-    ejercicios: [
-      "Press banca - 4x10",
-      "Press inclinado - 3x10",
-      "Aperturas - 3x12",
-      "Fondos - 3x10",
-      "Extensión tríceps - 3x12",
-    ],
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
   },
-  {
-    dia: "Día 2 - Espalda y Bíceps",
-    ejercicios: [
-      "Dominadas - 4x8",
-      "Remo con barra - 4x10",
-      "Jalón al pecho - 3x12",
-      "Curl bíceps - 3x12",
-      "Curl martillo - 3x10",
-    ],
+  card: {
+    padding: "20px",
+    color: "white",
+    textAlign: "center",
   },
-  {
-    dia: "Día 3 - Pierna",
-    ejercicios: [
-      "Sentadillas - 4x10",
-      "Prensa - 4x12",
-      "Peso muerto - 3x10",
-      "Extensión pierna - 3x12",
-      "Pantorrillas - 4x15",
-    ],
+  nav: {
+    display: "flex",
+    justifyContent: "space-around",
+    background: "#111827",
+    padding: "10px 0",
   },
-  {
-    dia: "Día 4 - Hombro",
-    ejercicios: [
-      "Press militar - 4x10",
-      "Elevaciones laterales - 3x12",
-      "Elevaciones frontales - 3x12",
-      "Pájaros - 3x12",
-      "Encogimientos - 3x15",
-    ],
+  navItem: {
+    background: "none",
+    border: "none",
+    fontSize: "20px",
   },
-];
+  rutinaCard: {
+    backgroundColor: "#1f2937",
+    padding: "15px",
+    borderRadius: "12px",
+    marginBottom: "15px",
+  },
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    backgroundColor: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "5px",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#22c55e",
+  },
+};
