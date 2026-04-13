@@ -14,92 +14,47 @@ export default function Home() {
       </div>
 
       <nav style={styles.nav}>
-  <button
-    onClick={() => setTab("home")}
-    style={{
-      ...styles.navItem,
-      color: tab === "home" ? "#22c55e" : "white",
-      transform: tab === "home" ? "scale(1.2)" : "scale(1)",
-      background: tab === "home" ? "#1f2937" : "transparent",
-      borderRadius: "10px",
-      padding: "5px 10px",
-    }}
-    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-    onTouchEnd={(e) =>
-      (e.currentTarget.style.transform =
-        tab === "home" ? "scale(1.2)" : "scale(1)")
-    }
-  >
-    🏠
-  </button>
+        <button
+          onClick={() => setTab("home")}
+          style={{
+            ...styles.navItem,
+            color: tab === "home" ? "#22c55e" : "white",
+          }}
+        >
+          🏠
+        </button>
 
-  <button
-    onClick={() => setTab("rutinas")}
-    style={{
-      ...styles.navItem,
-      color: tab === "rutinas" ? "#22c55e" : "white",
-      transform: tab === "rutinas" ? "scale(1.2)" : "scale(1)",
-      background: tab === "rutinas" ? "#1f2937" : "transparent",
-      borderRadius: "10px",
-      padding: "5px 10px",
-    }}
-    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-    onTouchEnd={(e) =>
-      (e.currentTarget.style.transform =
-        tab === "rutinas" ? "scale(1.2)" : "scale(1)")
-    }
-  >
-    🏋️
-  </button>
+        <button
+          onClick={() => setTab("rutinas")}
+          style={{
+            ...styles.navItem,
+            color: tab === "rutinas" ? "#22c55e" : "white",
+          }}
+        >
+          🏋️
+        </button>
 
-  <button
-    onClick={() => setTab("nutricion")}
-    style={{
-      ...styles.navItem,
-      color: tab === "nutricion" ? "#22c55e" : "white",
-      transform: tab === "nutricion" ? "scale(1.2)" : "scale(1)",
-      background: tab === "nutricion" ? "#1f2937" : "transparent",
-      borderRadius: "10px",
-      padding: "5px 10px",
-    }}
-    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-    onTouchEnd={(e) =>
-      (e.currentTarget.style.transform =
-        tab === "nutricion" ? "scale(1.2)" : "scale(1)")
-    }
-  >
-    🍎
-  </button>
+        <button
+          onClick={() => setTab("nutricion")}
+          style={{
+            ...styles.navItem,
+            color: tab === "nutricion" ? "#22c55e" : "white",
+          }}
+        >
+          🍎
+        </button>
 
-  <button
-    onClick={() => setTab("perfil")}
-    style={{
-      ...styles.navItem,
-      color: tab === "perfil" ? "#22c55e" : "white",
-      transform: tab === "perfil" ? "scale(1.2)" : "scale(1)",
-      background: tab === "perfil" ? "#1f2937" : "transparent",
-      borderRadius: "10px",
-      padding: "5px 10px",
-    }}
-    onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
-    onTouchEnd={(e) =>
-      (e.currentTarget.style.transform =
-        tab === "perfil" ? "scale(1.2)" : "scale(1)")
-    }
-  >
-    👤
-  </button>
-</nav>
-  );
-}
-
-// 🏠 Home
-function HomeScreen() {
-  return (
-    <>
-      <h1>💪 FitStartPro</h1>
-      <p>Bienvenido a tu app fitness</p>
-    </>
+        <button
+          onClick={() => setTab("perfil")}
+          style={{
+            ...styles.navItem,
+            color: tab === "perfil" ? "#22c55e" : "white",
+          }}
+        >
+          👤
+        </button>
+      </nav>
+    </main>
   );
 }
 
