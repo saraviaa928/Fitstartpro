@@ -308,4 +308,4 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "white",
     width: "80%",
   },
-};
+}; 
