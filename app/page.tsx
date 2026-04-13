@@ -108,12 +108,35 @@ useEffect(() => {
   };
 
   return (
-    <div style={{ textAlign: "left" }}>
-      <h2>🏋️ Rutinas</h2>
+  <div style={{ textAlign: "left" }}>
+    <h2>🏋️ Rutinas</h2>
 
-      {rutinas.map((rutina, index) => (
+    {rutinas.map((rutina, index) => {
+      const completadosDia = rutina.ejercicios.filter((e) =>
+        completados.includes(e)
+      ).length;
+
+      const total = rutina.ejercicios.length;
+      const porcentaje = Math.round((completadosDia / total) * 100);
+
+      return (
         <div key={index} style={styles.rutinaCard}>
           <h3>{rutina.dia}</h3>
+
+          {/* 🔥 Barra de progreso */}
+          <div style={styles.progressBar}>
+            <div
+              style={{
+                ...styles.progressFill,
+                width: `${porcentaje}%`,
+              }}
+            />
+          </div>
+
+          <p style={{ fontSize: "12px", marginBottom: "10px" }}>
+            {porcentaje}% completado
+          </p>
+
           <ul>
             {rutina.ejercicios.map((ejercicio, i) => {
               const isDone = completados.includes(ejercicio);
@@ -135,10 +158,10 @@ useEffect(() => {
             })}
           </ul>
         </div>
-      ))}
-    </div>
-  );
-}
+      );
+    })}
+  </div>
+);
 
 function NutricionScreen() {
   return (
