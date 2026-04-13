@@ -174,4 +174,178 @@ function RutinasScreen() {
       </div>
 
       {rutinas.map((rutina, index) => {
-        const completados
+        const completadosDia = rutina.ejercicios.filter((e) =>
+          completados.includes(e)
+        ).length;
+
+        const total = rutina.ejercicios.length;
+        const porcentaje = Math.round((completadosDia / total) * 100);
+
+        return (
+          <div key={index} style={styles.rutinaCard}>
+            <h3>{rutina.dia}</h3>
+
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  ...styles.progressFill,
+                  width: `${porcentaje}%`,
+                }}
+              />
+            </div>
+
+            <p style={{ fontSize: "12px" }}>
+              {porcentaje}% completado
+            </p>
+
+            <ul>
+              {rutina.ejercicios.map((ejercicio, i) => {
+                const isDone = completados.includes(ejercicio);
+
+                return (
+                  <li
+                    key={i}
+                    onClick={() => toggleEjercicio(ejercicio)}
+                    style={{
+                      cursor: "pointer",
+                      textDecoration: isDone ? "line-through" : "none",
+                      color: isDone ? "#22c55e" : "white",
+                    }}
+                  >
+                    {isDone ? "✅ " : ""}{ejercicio}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// 🍎 NUTRICIÓN
+function NutricionScreen() {
+  return (
+    <>
+      <h2>🍎 Nutrición</h2>
+      <p>Planes próximamente</p>
+    </>
+  );
+}
+
+// 👤 PERFIL REAL
+function PerfilScreen() {
+  const [peso, setPeso] = useState("");
+  const [meta, setMeta] = useState("");
+
+  useEffect(() => {
+    const p = localStorage.getItem("peso");
+    const m = localStorage.getItem("meta");
+
+    if (p) setPeso(p);
+    if (m) setMeta(m);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("peso", peso);
+    localStorage.setItem("meta", meta);
+  }, [peso, meta]);
+
+  return (
+    <div>
+      <h2>👤 Perfil</h2>
+
+      <input
+        placeholder="Peso actual (kg)"
+        value={peso}
+        onChange={(e) => setPeso(e.target.value)}
+        style={styles.input}
+      />
+
+      <input
+        placeholder="Meta (ej: 70kg)"
+        value={meta}
+        onChange={(e) => setMeta(e.target.value)}
+        style={styles.input}
+      />
+    </div>
+  );
+}
+
+// 🎨 ESTILOS
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
+
+  card: {
+    padding: "20px",
+    color: "white",
+    textAlign: "center",
+  },
+
+  nav: {
+    display: "flex",
+    justifyContent: "space-around",
+    background: "#111827",
+    padding: "10px 0",
+  },
+
+  navItem: {
+    background: "none",
+    border: "none",
+    fontSize: "20px",
+  },
+
+  rutinaCard: {
+    backgroundColor: "#1f2937",
+    padding: "15px",
+    borderRadius: "12px",
+    marginBottom: "15px",
+  },
+
+  globalCard: {
+    backgroundColor: "#111827",
+    padding: "15px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+    textAlign: "center",
+  },
+
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    backgroundColor: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "5px",
+  },
+
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#22c55e",
+  },
+
+  input: {
+    width: "100%",
+    padding: "10px",
+    marginTop: "10px",
+    borderRadius: "8px",
+    border: "none",
+  },
+
+  proButton: {
+    marginTop: "20px",
+    padding: "12px",
+    backgroundColor: "#22c55e",
+    border: "none",
+    borderRadius: "10px",
+    color: "white",
+    fontWeight: "bold",
+  },
+};
