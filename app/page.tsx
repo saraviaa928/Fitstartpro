@@ -142,9 +142,12 @@ function RutinasScreen() {
                     key={i}
                     onClick={() => toggleEjercicio(ejercicio)}
                     style={{
-                      cursor: "pointer",
-                      textDecoration: isDone ? "line-through" : "none",
-                      color: isDone ? "#22c55e" : "white",
+  cursor: "pointer",
+  textDecoration: isDone ? "line-through" : "none",
+  color: isDone ? "#22c55e" : "white",
+  transition: "all 0.3s ease",
+  transform: isDone ? "scale(1.02)" : "scale(1)",
+}}
                       marginBottom: "5px",
                     }}
                   >
