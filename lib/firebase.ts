@@ -1,20 +1,20 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// 🔥 TU CONFIG (déjala igual)
+// 🔥 Tu configuración
 const firebaseConfig = {
   apiKey: "AIzaSyBRiGWCAxMeW8kV0iYb5rxhH-XBOGDkKIc",
   authDomain: "fitstartpro.firebaseapp.com",
   projectId: "fitstartpro",
-  storageBucket: "fitstartpro.firebasestorage.app",
+  storageBucket: "fitstartpro.appspot.com",
   messagingSenderId: "632203203052",
   appId: "1:632203203052:web:290c3ced6a43303091f0c9",
 };
 
-// 🔥 Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// 🔥 Evita reinicialización (MUY IMPORTANTE)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// 🔥 EXPORTACIONES (CLAVE)
+// 🔥 Exportaciones
 export const auth = getAuth(app);
 export const db = getFirestore(app);
