@@ -216,4 +216,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   progressBar: {
     width: "100%",
-    height: "
+    height: "8px",
+    backgroundColor: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "5px",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#22c55e",
+  },
+};
