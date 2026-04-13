@@ -82,47 +82,47 @@ function RutinasScreen() {
   }, [completados]);
 
   const rutinas = [
-  {
-    dia: "Día 1 - Pecho y Tríceps",
-    ejercicios: [
-      "Press banca - 4x10",
-      "Press inclinado - 3x10",
-      "Aperturas - 3x12",
-      "Fondos - 3x10",
-      "Extensión tríceps - 3x12",
-    ],
-  },
-  {
-    dia: "Día 2 - Espalda y Bíceps",
-    ejercicios: [
-      "Dominadas - 4x8",
-      "Remo con barra - 4x10",
-      "Jalón al pecho - 3x12",
-      "Curl bíceps - 3x12",
-      "Curl martillo - 3x10",
-    ],
-  },
-  {
-    dia: "Día 3 - Pierna",
-    ejercicios: [
-      "Sentadillas - 4x10",
-      "Prensa - 4x12",
-      "Peso muerto - 3x10",
-      "Extensión pierna - 3x12",
-      "Pantorrillas - 4x15",
-    ],
-  },
-  {
-    dia: "Día 4 - Hombro",
-    ejercicios: [
-      "Press militar - 4x10",
-      "Elevaciones laterales - 3x12",
-      "Elevaciones frontales - 3x12",
-      "Pájaros - 3x12",
-      "Encogimientos - 3x15",
-    ],
-  },
-];
+    {
+      dia: "Día 1 - Pecho y Tríceps",
+      ejercicios: [
+        "Press banca - 4x10",
+        "Press inclinado - 3x10",
+        "Aperturas - 3x12",
+        "Fondos - 3x10",
+        "Extensión tríceps - 3x12",
+      ],
+    },
+    {
+      dia: "Día 2 - Espalda y Bíceps",
+      ejercicios: [
+        "Dominadas - 4x8",
+        "Remo con barra - 4x10",
+        "Jalón al pecho - 3x12",
+        "Curl bíceps - 3x12",
+        "Curl martillo - 3x10",
+      ],
+    },
+    {
+      dia: "Día 3 - Pierna",
+      ejercicios: [
+        "Sentadillas - 4x10",
+        "Prensa - 4x12",
+        "Peso muerto - 3x10",
+        "Extensión pierna - 3x12",
+        "Pantorrillas - 4x15",
+      ],
+    },
+    {
+      dia: "Día 4 - Hombro",
+      ejercicios: [
+        "Press militar - 4x10",
+        "Elevaciones laterales - 3x12",
+        "Elevaciones frontales - 3x12",
+        "Pájaros - 3x12",
+        "Encogimientos - 3x15",
+      ],
+    },
+  ];
 
   const toggleEjercicio = (ejercicio: string) => {
     if (completados.includes(ejercicio)) {
@@ -148,6 +148,7 @@ function RutinasScreen() {
           <div key={index} style={styles.rutinaCard}>
             <h3>{rutina.dia}</h3>
 
+            {/* 🔥 Barra de progreso */}
             <div style={styles.progressBar}>
               <div
                 style={{
