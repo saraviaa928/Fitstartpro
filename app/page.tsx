@@ -2,218 +2,241 @@
 import { useState, useEffect } from "react";
 
 // 🔥 Firebase
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  onAuthStateChanged,
   signOut,
 } from "firebase/auth";
+
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Home() {
   const [tab, setTab] = useState("home");
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  // 🔥 Detectar usuario logueado
+  // 🔐 Detectar usuario automáticamente
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
     });
-
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <p style={{ color: "white" }}>Cargando...</p>;
-
-  // 🔐 Si NO hay usuario → Login
+  // 🔒 Si no hay usuario → login
   if (!user) return <LoginScreen />;
 
   return (
     <main style={styles.container}>
       <div style={styles.card}>
-        {tab === "home" && <HomeScreen user={user} />}
+        {tab === "home" && <HomeScreen />}
         {tab === "rutinas" && <RutinasScreen />}
-        {tab === "nutricion" && <NutricionScreen />}
-        {tab === "perfil" && <PerfilScreen user={user} />}
+        {tab === "perfil" && <PerfilScreen />}
       </div>
 
       <nav style={styles.nav}>
         <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
         <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
-        <button onClick={() => setTab("nutricion")} style={styles.navItem}>🍎</button>
         <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
+        <button onClick={() => signOut(auth)} style={styles.navItem}>🚪</button>
       </nav>
     </main>
   );
 }
 
+//////////////////////////////////////
 // 🔐 LOGIN
+//////////////////////////////////////
 function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const login = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Bienvenido 🔥");
-    } catch (e) {
-      alert("Error al iniciar sesión");
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const register = async () => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Cuenta creada 🚀");
-    } catch (e) {
-      alert("Error al registrarse");
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  return (
+    <div style={styles.card}>
+      <h2>🔥 FitStartPro</h2>
+
+      <input
+        placeholder="Correo"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        style={styles.input}
+      />
+
+      <input
+        placeholder="Contraseña"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={styles.input}
+      />
+
+      <button onClick={login} style={styles.button}>Iniciar sesión</button>
+      <button onClick={register} style={styles.button}>Registrarse</button>
+    </div>
+  );
+}
+
+//////////////////////////////////////
+// 🏠 HOME
+//////////////////////////////////////
+function HomeScreen() {
+  return (
+    <>
+      <h1>💪 FitStartPro</h1>
+      <p>Tu progreso ahora se guarda en la nube ☁️</p>
+    </>
+  );
+}
+
+//////////////////////////////////////
+// 🏋️ RUTINAS (CON FIREBASE)
+//////////////////////////////////////
+function RutinasScreen() {
+  const [completados, setCompletados] = useState<string[]>([]);
+
+  const rutinas = [
+    {
+      dia: "Día 1",
+      ejercicios: ["Press banca", "Aperturas", "Fondos"],
+    },
+    {
+      dia: "Día 2",
+      ejercicios: ["Dominadas", "Remo", "Curl bíceps"],
+    },
+  ];
+
+  // 🔥 CARGAR DESDE FIREBASE
+  useEffect(() => {
+    const cargar = async () => {
+      if (!auth.currentUser) return;
+
+      const ref = doc(db, "usuarios", auth.currentUser.uid);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        setCompletados(snap.data().progreso || []);
+      }
+    };
+
+    cargar();
+  }, []);
+
+  // 🔥 GUARDAR EN FIREBASE
+  useEffect(() => {
+    const guardar = async () => {
+      if (!auth.currentUser) return;
+
+      await setDoc(doc(db, "usuarios", auth.currentUser.uid), {
+        progreso: completados,
+      }, { merge: true });
+    };
+
+    guardar();
+  }, [completados]);
+
+  const toggleEjercicio = (ejercicio: string) => {
+    if (completados.includes(ejercicio)) {
+      setCompletados(completados.filter((e) => e !== ejercicio));
+    } else {
+      setCompletados([...completados, ejercicio]);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>🔐 FitStartPro</h2>
+    <div>
+      <h2>🏋️ Rutinas</h2>
 
-        <input
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
+      {rutinas.map((r, i) => (
+        <div key={i} style={styles.rutinaCard}>
+          <h3>{r.dia}</h3>
 
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
+          <ul>
+            {r.ejercicios.map((e, idx) => {
+              const done = completados.includes(e);
 
-        <button onClick={login} style={styles.button}>
-          Iniciar sesión
-        </button>
-
-        <button onClick={register} style={styles.button}>
-          Crear cuenta
-        </button>
-      </div>
+              return (
+                <li
+                  key={idx}
+                  onClick={() => toggleEjercicio(e)}
+                  style={{
+                    cursor: "pointer",
+                    textDecoration: done ? "line-through" : "none",
+                    color: done ? "#22c55e" : "white",
+                  }}
+                >
+                  {done ? "✅ " : ""}{e}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }
 
-// 🏠 HOME
-function HomeScreen({ user }: any) {
-  return (
-    <>
-      <h1>💪 FitStartPro</h1>
-      <p>Bienvenido: {user.email}</p>
-    </>
-  );
-}
+//////////////////////////////////////
+// 👤 PERFIL (GUARDADO EN FIREBASE)
+//////////////////////////////////////
+function PerfilScreen() {
+  const [peso, setPeso] = useState("");
+  const [meta, setMeta] = useState("");
 
-// 🏋️ RUTINAS
-function RutinasScreen() {
-  const [completados, setCompletados] = useState<string[]>([]);
+  const guardarPerfil = async () => {
+    if (!auth.currentUser) return;
 
-  useEffect(() => {
-    const data = localStorage.getItem("progreso");
-    if (data) setCompletados(JSON.parse(data));
-  }, []);
+    await setDoc(doc(db, "usuarios", auth.currentUser.uid), {
+      peso,
+      meta,
+    }, { merge: true });
 
-  useEffect(() => {
-    import { doc, setDoc, getDoc } from "firebase/firestore";
-import { auth, db } from "../lib/firebase";
-  }, [completados]);
-
-  const rutinas = [
-    {
-      dia: "Día 1 - Pecho",
-      ejercicios: ["Press banca", "Aperturas"],
-    },
-    {
-      dia: "Día 2 - Espalda",
-      ejercicios: ["Dominadas", "Remo"],
-    },
-  ];
-
-  const toggleEjercicio = (ejercicio: string) => {
-    setCompletados((prev) =>
-      prev.includes(ejercicio)
-        ? prev.filter((e) => e !== ejercicio)
-        : [...prev, ejercicio]
-    );
+    alert("Guardado ✅");
   };
 
   return (
-    <div style={{ textAlign: "left" }}>
-      <h2>🏋️ Rutinas</h2>
+    <div>
+      <h2>👤 Perfil</h2>
 
-      {rutinas.map((rutina, index) => {
-        const completadosDia = rutina.ejercicios.filter((e) =>
-          completados.includes(e)
-        ).length;
+      <input
+        placeholder="Peso"
+        value={peso}
+        onChange={(e) => setPeso(e.target.value)}
+        style={styles.input}
+      />
 
-        const total = rutina.ejercicios.length;
-        const porcentaje = Math.round((completadosDia / total) * 100);
+      <input
+        placeholder="Meta"
+        value={meta}
+        onChange={(e) => setMeta(e.target.value)}
+        style={styles.input}
+      />
 
-        return (
-          <div key={index} style={styles.rutinaCard}>
-            <h3>{rutina.dia}</h3>
-
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  ...styles.progressFill,
-                  width: `${porcentaje}%`,
-                }}
-              />
-            </div>
-
-            <p>{porcentaje}% completado</p>
-
-            <ul>
-              {rutina.ejercicios.map((e, i) => (
-                <li key={i} onClick={() => toggleEjercicio(e)}>
-                  {completados.includes(e) ? "✅ " : ""}{e}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+      <button onClick={guardarPerfil} style={styles.button}>
+        Guardar perfil
+      </button>
     </div>
   );
 }
 
-// 🍎
-function NutricionScreen() {
-  return <h2>🍎 Nutrición</h2>;
-}
-
-// 👤 PERFIL
-function PerfilScreen({ user }: any) {
-  const logout = () => signOut(auth);
-
-  return (
-    <>
-      <h2>👤 Perfil</h2>
-      <p>{user.email}</p>
-      <button onClick={logout}>Cerrar sesión</button>
-    </>
-  );
-}
-
+//////////////////////////////////////
 // 🎨 ESTILOS
+//////////////////////////////////////
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
     background: "#0f172a",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
   card: {
     padding: "20px",
@@ -224,7 +247,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     justifyContent: "space-around",
     background: "#111827",
-    padding: "10px 0",
+    padding: "10px",
   },
   navItem: {
     background: "none",
@@ -232,37 +255,27 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "white",
     fontSize: "20px",
   },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    border: "none",
-  },
-  button: {
-    padding: "10px",
-    margin: "5px",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "#22c55e",
-    color: "white",
-  },
   rutinaCard: {
     backgroundColor: "#1f2937",
     padding: "15px",
     borderRadius: "12px",
     marginBottom: "15px",
   },
-  progressBar: {
-    width: "100%",
-    height: "8px",
-    backgroundColor: "#374151",
-    borderRadius: "10px",
-    overflow: "hidden",
+  input: {
+    display: "block",
+    margin: "10px auto",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "none",
+    width: "80%",
   },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
+  button: {
+    marginTop: "10px",
+    padding: "10px",
+    background: "#22c55e",
+    border: "none",
+    borderRadius: "8px",
+    color: "white",
+    width: "80%",
   },
 };
