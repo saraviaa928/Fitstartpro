@@ -14,32 +14,38 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Home() {
   const [tab, setTab] = useState("home");
-
-  // 🔥 IMPORTANTE (solución pantalla blanca)
   const [user, setUser] = useState<any>(undefined);
+  const [ready, setReady] = useState(false); // 🔥 clave
 
-  // 🔐 Detectar usuario
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-    });
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setReady(true); // 🔥 ya listo
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    } catch (err) {
+      console.error(err);
+      setReady(true);
+    }
   }, []);
 
-  // 🔥 Loading (evita pantalla blanca)
-  if (user === undefined) {
+  // 🔥 LOADING REAL
+  if (!ready) {
     return (
       <main style={styles.container}>
-        <p style={{ color: "white", textAlign: "center" }}>
-          Cargando...
-        </p>
+        <h2 style={{ color: "white", textAlign: "center" }}>
+          Cargando app...
+        </h2>
       </main>
     );
   }
 
-  // 🔐 Si no hay usuario → login
-  if (!user) return <LoginScreen />;
+  // 🔐 LOGIN
+  if (!user) {
+    return <LoginScreen />;
+  }
 
   return (
     <main style={styles.container}>
@@ -69,16 +75,16 @@ function LoginScreen() {
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      alert("Error al iniciar sesión");
+    } catch (e) {
+      alert("Error login");
     }
   };
 
   const register = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      alert("Error al registrarse");
+    } catch (e) {
+      alert("Error registro");
     }
   };
 
@@ -101,13 +107,8 @@ function LoginScreen() {
         style={styles.input}
       />
 
-      <button onClick={login} style={styles.button}>
-        Iniciar sesión
-      </button>
-
-      <button onClick={register} style={styles.button}>
-        Registrarse
-      </button>
+      <button onClick={login} style={styles.button}>Login</button>
+      <button onClick={register} style={styles.button}>Registro</button>
     </div>
   );
 }
@@ -119,64 +120,66 @@ function HomeScreen() {
   return (
     <>
       <h1>💪 FitStartPro</h1>
-      <p>Tu progreso ahora se guarda en la nube ☁️</p>
+      <p>App funcionando 🚀</p>
     </>
   );
 }
 
 //////////////////////////////////////
-// 🏋️ RUTINAS
+// 🏋️ RUTINAS (SAFE)
 //////////////////////////////////////
 function RutinasScreen() {
   const [completados, setCompletados] = useState<string[]>([]);
 
   const rutinas = [
-    {
-      dia: "Día 1",
-      ejercicios: ["Press banca", "Aperturas", "Fondos"],
-    },
-    {
-      dia: "Día 2",
-      ejercicios: ["Dominadas", "Remo", "Curl bíceps"],
-    },
+    { dia: "Día 1", ejercicios: ["Press", "Aperturas"] },
+    { dia: "Día 2", ejercicios: ["Dominadas", "Curl"] },
   ];
 
-  // 🔥 Cargar desde Firebase
+  // 🔥 SAFE LOAD
   useEffect(() => {
     const cargar = async () => {
-      if (!auth.currentUser) return;
+      try {
+        if (!auth.currentUser) return;
 
-      const ref = doc(db, "usuarios", auth.currentUser.uid);
-      const snap = await getDoc(ref);
+        const ref = doc(db, "usuarios", auth.currentUser.uid);
+        const snap = await getDoc(ref);
 
-      if (snap.exists()) {
-        setCompletados(snap.data().progreso || []);
+        if (snap.exists()) {
+          setCompletados(snap.data().progreso || []);
+        }
+      } catch (e) {
+        console.error("Error cargar:", e);
       }
     };
 
     cargar();
   }, []);
 
-  // 🔥 Guardar en Firebase
+  // 🔥 SAFE SAVE
   useEffect(() => {
     const guardar = async () => {
-      if (!auth.currentUser) return;
+      try {
+        if (!auth.currentUser) return;
 
-      await setDoc(
-        doc(db, "usuarios", auth.currentUser.uid),
-        { progreso: completados },
-        { merge: true }
-      );
+        await setDoc(
+          doc(db, "usuarios", auth.currentUser.uid),
+          { progreso: completados },
+          { merge: true }
+        );
+      } catch (e) {
+        console.error("Error guardar:", e);
+      }
     };
 
     guardar();
   }, [completados]);
 
-  const toggleEjercicio = (ejercicio: string) => {
-    if (completados.includes(ejercicio)) {
-      setCompletados(completados.filter((e) => e !== ejercicio));
+  const toggle = (e: string) => {
+    if (completados.includes(e)) {
+      setCompletados(completados.filter((x) => x !== e));
     } else {
-      setCompletados([...completados, ejercicio]);
+      setCompletados([...completados, e]);
     }
   };
 
@@ -188,25 +191,18 @@ function RutinasScreen() {
         <div key={i} style={styles.rutinaCard}>
           <h3>{r.dia}</h3>
 
-          <ul>
-            {r.ejercicios.map((e, idx) => {
-              const done = completados.includes(e);
-
-              return (
-                <li
-                  key={idx}
-                  onClick={() => toggleEjercicio(e)}
-                  style={{
-                    cursor: "pointer",
-                    textDecoration: done ? "line-through" : "none",
-                    color: done ? "#22c55e" : "white",
-                  }}
-                >
-                  {done ? "✅ " : ""}{e}
-                </li>
-              );
-            })}
-          </ul>
+          {r.ejercicios.map((e, idx) => (
+            <p
+              key={idx}
+              onClick={() => toggle(e)}
+              style={{
+                cursor: "pointer",
+                color: completados.includes(e) ? "#22c55e" : "white",
+              }}
+            >
+              {completados.includes(e) ? "✅ " : ""}{e}
+            </p>
+          ))}
         </div>
       ))}
     </div>
@@ -217,41 +213,27 @@ function RutinasScreen() {
 // 👤 PERFIL
 //////////////////////////////////////
 function PerfilScreen() {
-  const [peso, setPeso] = useState("");
-  const [meta, setMeta] = useState("");
+  const guardar = async () => {
+    try {
+      if (!auth.currentUser) return;
 
-  const guardarPerfil = async () => {
-    if (!auth.currentUser) return;
+      await setDoc(
+        doc(db, "usuarios", auth.currentUser.uid),
+        { test: true },
+        { merge: true }
+      );
 
-    await setDoc(
-      doc(db, "usuarios", auth.currentUser.uid),
-      { peso, meta },
-      { merge: true }
-    );
-
-    alert("Perfil guardado ✅");
+      alert("Guardado");
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
     <div>
       <h2>👤 Perfil</h2>
-
-      <input
-        placeholder="Peso"
-        value={peso}
-        onChange={(e) => setPeso(e.target.value)}
-        style={styles.input}
-      />
-
-      <input
-        placeholder="Meta"
-        value={meta}
-        onChange={(e) => setMeta(e.target.value)}
-        style={styles.input}
-      />
-
-      <button onClick={guardarPerfil} style={styles.button}>
-        Guardar perfil
+      <button onClick={guardar} style={styles.button}>
+        Guardar prueba
       </button>
     </div>
   );
@@ -287,16 +269,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   rutinaCard: {
     backgroundColor: "#1f2937",
-    padding: "15px",
-    borderRadius: "12px",
-    marginBottom: "15px",
+    padding: "10px",
+    margin: "10px",
+    borderRadius: "10px",
   },
   input: {
     display: "block",
     margin: "10px auto",
     padding: "10px",
-    borderRadius: "8px",
-    border: "none",
     width: "80%",
   },
   button: {
@@ -304,8 +284,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "10px",
     background: "#22c55e",
     border: "none",
-    borderRadius: "8px",
     color: "white",
-    width: "80%",
   },
 };
