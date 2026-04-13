@@ -120,10 +120,21 @@ useEffect(() => {
       const porcentaje = Math.round((completadosDia / total) * 100);
 
       return (
+  <div style={{ textAlign: "left" }}>
+    <h2>🏋️ Rutinas</h2>
+
+    {rutinas.map((rutina, index) => {
+      const completadosDia = rutina.ejercicios.filter((e) =>
+        completados.includes(e)
+      ).length;
+
+      const total = rutina.ejercicios.length;
+      const porcentaje = Math.round((completadosDia / total) * 100);
+
+      return (
         <div key={index} style={styles.rutinaCard}>
           <h3>{rutina.dia}</h3>
 
-          {/* 🔥 Barra de progreso */}
           <div style={styles.progressBar}>
             <div
               style={{
@@ -162,55 +173,4 @@ useEffect(() => {
     })}
   </div>
 );
-
-function NutricionScreen() {
-  return (
-    <>
-      <h2>🍎 Nutrición</h2>
-      <p>Planes de dieta en camino</p>
-    </>
-  );
 }
-
-function PerfilScreen() {
-  return (
-    <>
-      <h2>👤 Perfil</h2>
-      <p>Tu progreso y datos</p>
-    </>
-  );
-}
-
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    minHeight: "100vh",
-    background: "#0f172a",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  },
-  card: {
-    padding: "20px",
-    color: "white",
-    textAlign: "center",
-  },
-  nav: {
-    display: "flex",
-    justifyContent: "space-around",
-    background: "#111827",
-    padding: "10px 0",
-    borderTop: "1px solid #1f2937",
-  },
-  navItem: {
-    background: "none",
-    border: "none",
-    color: "white",
-    fontSize: "20px",
-  },
-  rutinaCard: {
-    backgroundColor: "#1f2937",
-    padding: "15px",
-    borderRadius: "12px",
-    marginBottom: "15px",
-  },
-};
