@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -8,39 +8,25 @@ import {
   signOut,
   User,
 } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Detectar sesión
   useEffect(() => {
-    try {
-      const unsubscribe = onAuthStateChanged(auth, (u) => {
-        setUser(u);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error auth:", error);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // 🔥 Pantalla de carga (EVITA BLANCO)
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        <h2>Cargando...</h2>
-      </div>
-    );
-  }
+  if (loading) return <div style={styles.loading}>Cargando...</div>;
 
-  // 🔐 Si NO hay usuario → Login
   if (!user) return <LoginScreen />;
 
-  // ✅ Si hay usuario → App
   return <AppScreen user={user} />;
 }
 
@@ -55,23 +41,21 @@ function LoginScreen() {
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
+    } catch {
       alert("Error al iniciar sesión");
-      console.error(e);
     }
   };
 
   const register = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
+    } catch {
       alert("Error al crear cuenta");
-      console.error(e);
     }
   };
 
   return (
-    <div style={styles.containerCenter}>
+    <div style={styles.center}>
       <h1>🔥 FitStartPro</h1>
 
       <input
@@ -89,19 +73,14 @@ function LoginScreen() {
         style={styles.input}
       />
 
-      <button onClick={login} style={styles.button}>
-        Login
-      </button>
-
-      <button onClick={register} style={styles.button}>
-        Crear cuenta
-      </button>
+      <button onClick={login} style={styles.button}>Login</button>
+      <button onClick={register} style={styles.button}>Crear cuenta</button>
     </div>
   );
 }
 
 //////////////////////////
-// 🏠 APP PRINCIPAL
+// 🏠 APP
 //////////////////////////
 
 function AppScreen({ user }: { user: User }) {
@@ -111,7 +90,7 @@ function AppScreen({ user }: { user: User }) {
     <main style={styles.container}>
       <div style={styles.card}>
         {tab === "home" && <HomeScreen user={user} />}
-        {tab === "rutinas" && <RutinasScreen />}
+        {tab === "rutinas" && <RutinasScreen user={user} />}
         {tab === "perfil" && <PerfilScreen user={user} />}
       </div>
 
@@ -142,39 +121,146 @@ function HomeScreen({ user }: { user: User }) {
 }
 
 //////////////////////////
-// 🏋️ RUTINAS
+// 🏋️ RUTINAS PRO
 //////////////////////////
 
-function RutinasScreen() {
-  const [done, setDone] = useState<string[]>([]);
+function RutinasScreen({ user }: { user: User }) {
+  const [completados, setCompletados] = useState<string[]>([]);
 
-  const ejercicios = ["Press banca", "Dominadas", "Sentadillas"];
+  const rutinas = [
+    {
+      dia: "Día 1 - Pecho y Tríceps",
+      ejercicios: [
+        "Press banca",
+        "Press inclinado",
+        "Aperturas",
+        "Fondos",
+      ],
+    },
+    {
+      dia: "Día 2 - Espalda y Bíceps",
+      ejercicios: [
+        "Dominadas",
+        "Remo con barra",
+        "Curl bíceps",
+        "Curl martillo",
+      ],
+    },
+    {
+      dia: "Día 3 - Pierna",
+      ejercicios: [
+        "Sentadillas",
+        "Prensa",
+        "Peso muerto",
+        "Pantorrillas",
+      ],
+    },
+    {
+      dia: "Día 4 - Hombro",
+      ejercicios: [
+        "Press militar",
+        "Elevaciones laterales",
+        "Pájaros",
+        "Encogimientos",
+      ],
+    },
+  ];
 
-  const toggle = (e: string) => {
-    if (done.includes(e)) {
-      setDone(done.filter((x) => x !== e));
-    } else {
-      setDone([...done, e]);
+  // 🔥 CARGAR PROGRESO
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        const ref = doc(db, "progresos", user.uid);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          setCompletados(snap.data().ejercicios || []);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    cargar();
+  }, [user]);
+
+  // 🔥 GUARDAR PROGRESO
+  const guardar = async (data: string[]) => {
+    try {
+      await setDoc(doc(db, "progresos", user.uid), {
+        ejercicios: data,
+      });
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  return (
-    <>
-      <h2>Rutinas</h2>
+  const toggle = (ejercicio: string) => {
+    let nuevos;
 
-      {ejercicios.map((e, i) => (
-        <p
-          key={i}
-          onClick={() => toggle(e)}
-          style={{
-            cursor: "pointer",
-            textDecoration: done.includes(e) ? "line-through" : "none",
-          }}
-        >
-          {e}
-        </p>
-      ))}
-    </>
+    if (completados.includes(ejercicio)) {
+      nuevos = completados.filter((e) => e !== ejercicio);
+    } else {
+      nuevos = [...completados, ejercicio];
+    }
+
+    setCompletados(nuevos);
+    guardar(nuevos);
+  };
+
+  return (
+    <div style={{ textAlign: "left", color: "white" }}>
+      <h2>🏋️ Rutinas</h2>
+
+      {rutinas.map((rutina, index) => {
+        const completadosDia = rutina.ejercicios.filter((e) =>
+          completados.includes(e)
+        ).length;
+
+        const total = rutina.ejercicios.length;
+        const porcentaje = Math.round((completadosDia / total) * 100);
+
+        return (
+          <div key={index} style={styles.rutinaCard}>
+            <h3>{rutina.dia}</h3>
+
+            {/* 🔥 Barra progreso */}
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  ...styles.progressFill,
+                  width: `${porcentaje}%`,
+                }}
+              />
+            </div>
+
+            <p style={{ fontSize: "12px" }}>
+              {porcentaje}% completado
+            </p>
+
+            <ul>
+              {rutina.ejercicios.map((ejercicio, i) => {
+                const done = completados.includes(ejercicio);
+
+                return (
+                  <li
+                    key={i}
+                    onClick={() => toggle(ejercicio)}
+                    style={{
+                      cursor: "pointer",
+                      textDecoration: done ? "line-through" : "none",
+                      color: done ? "#22c55e" : "white",
+                    }}
+                  >
+                    {done ? "✅ " : ""}{ejercicio}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -224,7 +310,7 @@ const styles: any = {
     fontSize: "20px",
   },
 
-  containerCenter: {
+  center: {
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
@@ -247,7 +333,27 @@ const styles: any = {
     padding: "10px 20px",
     borderRadius: "10px",
     color: "white",
-    cursor: "pointer",
+  },
+
+  rutinaCard: {
+    backgroundColor: "#1f2937",
+    padding: "15px",
+    borderRadius: "12px",
+    marginBottom: "15px",
+  },
+
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    backgroundColor: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "5px",
+  },
+
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#22c55e",
   },
 
   loading: {
