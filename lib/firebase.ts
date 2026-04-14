@@ -1,17 +1,17 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore"; // 🔥 IMPORTANTE
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
+  apiKey: "AIzaSy...",
   authDomain: "fitstartpro.firebaseapp.com",
   projectId: "fitstartpro",
   storageBucket: "fitstartpro.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "XXXX",
+  messagingSenderId: "632203203052",
+  appId: "1:632203203052:web:..."
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app); // 🔥 EXPORTAR FIRESTORE
