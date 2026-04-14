@@ -5,193 +5,152 @@ import { auth, db } from "../lib/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
   onAuthStateChanged,
+  User,
+  signOut,
 } from "firebase/auth";
-
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [tab, setTab] = useState("home");
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // 🔥 Detectar sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  // 🔥 VALIDACIÓN
-  const validar = () => {
-    if (!email || !email.includes("@") || !email.includes(".")) {
-      alert("❌ Ingresa un correo válido");
-      return false;
-    }
+  if (loading) return null;
 
-    if (password.length < 6) {
-      alert("❌ La contraseña debe tener mínimo 6 caracteres");
-      return false;
-    }
+  if (!user) return <Login />;
 
-    return true;
-  };
+  return <App user={user} />;
+}
 
-  // 🔐 LOGIN
+//////////////////////////////////////////
+// 🔐 LOGIN
+//////////////////////////////////////////
+
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const login = async () => {
-    if (!validar()) return;
-
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("✅ Bienvenido");
+      if (!email.includes("@")) {
+        alert("Correo inválido");
+        return;
+      }
+
+      await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (error: any) {
       alert(error.message);
     }
   };
 
-  // 🆕 REGISTRO
   const register = async () => {
-    if (!validar()) return;
-
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("✅ Cuenta creada");
+      await createUserWithEmailAndPassword(auth, email.trim(), password);
     } catch (error: any) {
       alert(error.message);
     }
   };
 
-  // 🚪 LOGOUT
-  const logout = async () => {
-    await signOut(auth);
-  };
-
-  // ⏳ Loading
-  if (loading) {
-    return (
-      <main style={styles.container}>
-        <p style={{ color: "white" }}>Cargando...</p>
-      </main>
-    );
-  }
-
-  // 🔐 LOGIN UI
-  if (!user) {
-    return (
-      <main style={styles.container}>
-        <h1 style={styles.title}>🔥 FitStartPro</h1>
-
-        <input
-          type="email"
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
-
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
-
-        <button onClick={login} style={styles.button}>
-          Login
-        </button>
-
-        <button onClick={register} style={styles.buttonSecondary}>
-          Crear cuenta
-        </button>
-      </main>
-    );
-  }
-
-  // 🔥 APP PRINCIPAL
   return (
-    <main style={styles.container}>
-      <div style={styles.card}>
-        {tab === "home" && <HomeScreen user={user} />}
-        {tab === "rutinas" && <RutinasScreen user={user} />}
-        {tab === "perfil" && <PerfilScreen user={user} />}
-      </div>
+    <div style={styles.container}>
+      <h1>🔥 FitStartPro</h1>
 
-      <nav style={styles.nav}>
-        <button onClick={() => setTab("home")} style={styles.navItem}>🏠</button>
-        <button onClick={() => setTab("rutinas")} style={styles.navItem}>🏋️</button>
-        <button onClick={() => setTab("perfil")} style={styles.navItem}>👤</button>
-      </nav>
-    </main>
+      <input
+        placeholder="Correo"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        style={styles.input}
+      />
+
+      <input
+        placeholder="Contraseña"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={styles.input}
+      />
+
+      <button onClick={login} style={styles.button}>
+        Login
+      </button>
+
+      <button onClick={register} style={styles.button}>
+        Crear cuenta
+      </button>
+    </div>
   );
 }
 
-// 🏠 HOME
-function HomeScreen({ user }: any) {
-  return (
-    <>
-      <h1>💪 FitStartPro</h1>
-      <p>Bienvenido: {user.email}</p>
-    </>
-  );
-}
+//////////////////////////////////////////
+// 🏋️ APP PRINCIPAL
+//////////////////////////////////////////
 
-// 🏋️ RUTINAS CON FIREBASE
-function RutinasScreen({ user }: any) {
+function App({ user }: { user: User }) {
+  const [tab, setTab] = useState("rutinas");
   const [completados, setCompletados] = useState<string[]>([]);
 
   const rutinas = [
     {
       dia: "Día 1 - Pecho",
-      ejercicios: ["Press banca", "Aperturas"],
+      ejercicios: ["Press banca", "Press inclinado", "Fondos"],
     },
     {
       dia: "Día 2 - Espalda",
-      ejercicios: ["Dominadas", "Remo"],
+      ejercicios: ["Dominadas", "Remo", "Jalón"],
     },
     {
       dia: "Día 3 - Pierna",
-      ejercicios: ["Sentadillas", "Prensa"],
+      ejercicios: ["Sentadilla", "Prensa", "Pantorrilla"],
     },
   ];
 
-  // 🔥 CARGAR
+  //////////////////////////////////////////
+  // ☁️ CARGAR DESDE FIREBASE
+  //////////////////////////////////////////
   useEffect(() => {
-    const cargar = async () => {
-      if (!user) return;
+    const loadData = async () => {
+      try {
+        const ref = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(ref);
 
-      const ref = doc(db, "usuarios", user.uid);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        setCompletados(snap.data().completados || []);
+        if (snap.exists()) {
+          setCompletados(snap.data().completados || []);
+        }
+      } catch (e) {
+        console.log("Error cargando datos");
       }
     };
 
-    cargar();
+    loadData();
   }, [user]);
 
-  // 🔥 GUARDAR
+  //////////////////////////////////////////
+  // ☁️ GUARDAR EN FIREBASE
+  //////////////////////////////////////////
   useEffect(() => {
-    const guardar = async () => {
-      if (!user) return;
-
-      const ref = doc(db, "usuarios", user.uid);
-
-      await setDoc(ref, { completados }, { merge: true });
+    const saveData = async () => {
+      try {
+        await setDoc(doc(db, "usuarios", user.uid), {
+          completados,
+        });
+      } catch (e) {
+        console.log("Error guardando");
+      }
     };
 
-    guardar();
+    if (user) saveData();
   }, [completados, user]);
 
-  const toggleEjercicio = (ejercicio: string) => {
+  const toggle = (ejercicio: string) => {
     if (completados.includes(ejercicio)) {
       setCompletados(completados.filter((e) => e !== ejercicio));
     } else {
@@ -200,113 +159,75 @@ function RutinasScreen({ user }: any) {
   };
 
   return (
-    <div style={{ textAlign: "left" }}>
-      <h2>🏋️ Rutinas</h2>
+    <main style={styles.container}>
+      <h2>Bienvenido {user.email}</h2>
+
+      <button onClick={() => signOut(auth)} style={styles.logout}>
+        Cerrar sesión
+      </button>
 
       {rutinas.map((r, i) => (
-        <div key={i} style={styles.rutinaCard}>
+        <div key={i} style={styles.card}>
           <h3>{r.dia}</h3>
 
-          <ul>
-            {r.ejercicios.map((e, j) => {
-              const done = completados.includes(e);
-
-              return (
-                <li
-                  key={j}
-                  onClick={() => toggleEjercicio(e)}
-                  style={{
-                    cursor: "pointer",
-                    textDecoration: done ? "line-through" : "none",
-                    color: done ? "#22c55e" : "white",
-                  }}
-                >
-                  {done ? "✅ " : ""} {e}
-                </li>
-              );
-            })}
-          </ul>
+          {r.ejercicios.map((e, j) => (
+            <p
+              key={j}
+              onClick={() => toggle(e)}
+              style={{
+                cursor: "pointer",
+                color: completados.includes(e) ? "#22c55e" : "white",
+              }}
+            >
+              {completados.includes(e) ? "✅ " : ""} {e}
+            </p>
+          ))}
         </div>
       ))}
-    </div>
+    </main>
   );
 }
 
-// 👤 PERFIL
-function PerfilScreen({ user }: any) {
-  return (
-    <>
-      <h2>👤 Perfil</h2>
-      <p>{user.email}</p>
-    </>
-  );
-}
-
+//////////////////////////////////////////
 // 🎨 ESTILOS
-const styles: { [key: string]: React.CSSProperties } = {
+//////////////////////////////////////////
+
+const styles: any = {
   container: {
     minHeight: "100vh",
     background: "#0f172a",
+    color: "white",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
-  },
-
-  card: {
+    alignItems: "center",
     padding: "20px",
-    color: "white",
-    textAlign: "center",
   },
-
-  nav: {
-    display: "flex",
-    justifyContent: "space-around",
-    background: "#111827",
-    padding: "10px 0",
-  },
-
-  navItem: {
-    background: "none",
-    border: "none",
-    color: "white",
-    fontSize: "20px",
-  },
-
-  rutinaCard: {
-    backgroundColor: "#1f2937",
-    padding: "15px",
-    borderRadius: "12px",
-    marginBottom: "15px",
-  },
-
-  title: {
-    color: "white",
-    marginBottom: "20px",
-  },
-
   input: {
-    width: "250px",
+    margin: "10px",
     padding: "10px",
-    marginBottom: "10px",
     borderRadius: "8px",
-    border: "none",
+    width: "250px",
   },
-
   button: {
+    margin: "10px",
+    padding: "10px",
     background: "#22c55e",
-    color: "white",
     border: "none",
-    padding: "10px 20px",
     borderRadius: "8px",
-    marginTop: "10px",
+    color: "white",
   },
-
-  buttonSecondary: {
-    background: "#16a34a",
+  card: {
+    background: "#1f2937",
+    padding: "15px",
+    margin: "10px",
+    borderRadius: "10px",
+    width: "300px",
+  },
+  logout: {
+    marginBottom: "20px",
+    background: "red",
     color: "white",
+    padding: "8px",
     border: "none",
-    padding: "10px 20px",
-    borderRadius: "8px",
-    marginTop: "10px",
   },
 };
