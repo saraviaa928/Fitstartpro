@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 // ⚠️ PEGA TU API KEY REAL AQUÍ
 const firebaseConfig = {
-  apiKey: "AQUI_TU_API_KEY_REAL",
+  apiKey: "AIzaSyCpoOjcZKvPJJAhGDiWSheL8HpgXeBUB2o",
   authDomain: "fitstartpro.firebaseapp.com",
   projectId: "fitstartpro",
   storageBucket: "fitstartpro.appspot.com",
