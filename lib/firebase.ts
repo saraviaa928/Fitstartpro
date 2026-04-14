@@ -1,17 +1,16 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"; // 🔥 IMPORTANTE
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyBRiGWCAxMeW8kV0iYb5rxhH-XBOGDkKIc",
   authDomain: "fitstartpro.firebaseapp.com",
   projectId: "fitstartpro",
-  storageBucket: "fitstartpro.appspot.com",
+  storageBucket: "fitstartpro.firebasestorage.app",
   messagingSenderId: "632203203052",
-  appId: "1:632203203052:web:..."
+  appId: "1:632203203052:web:290c3ced6a43303091f0c9",
 };
 
-const app = initializeApp(firebaseConfig);
+// 🔥 Evita reinicialización (IMPORTANTE)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const auth = getAuth(app);
-export const db = getFirestore(app); // 🔥 EXPORTAR FIRESTORE
