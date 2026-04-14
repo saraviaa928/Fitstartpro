@@ -16,42 +16,70 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // 🔥 Detectar sesión activa
+  // 🔥 Detectar sesión
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // 🔥 LOGIN
+  // 🔥 VALIDACIÓN PRO
+  const validar = () => {
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      alert("❌ Ingresa un correo válido");
+      return false;
+    }
+
+    if (password.length < 6) {
+      alert("❌ La contraseña debe tener mínimo 6 caracteres");
+      return false;
+    }
+
+    return true;
+  };
+
+  // 🔐 LOGIN
   const login = async () => {
+    if (!validar()) return;
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert("✅ Bienvenido");
     } catch (error: any) {
-      alert(error.message);
+      if (error.code === "auth/user-not-found") {
+        alert("❌ Usuario no existe");
+      } else if (error.code === "auth/wrong-password") {
+        alert("❌ Contraseña incorrecta");
+      } else {
+        alert(error.message);
+      }
     }
   };
 
-  // 🔥 CREAR CUENTA
+  // 🆕 REGISTRO
   const register = async () => {
+    if (!validar()) return;
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       alert("✅ Cuenta creada");
     } catch (error: any) {
-      alert(error.message);
+      if (error.code === "auth/email-already-in-use") {
+        alert("❌ Este correo ya está registrado");
+      } else {
+        alert(error.message);
+      }
     }
   };
 
-  // 🔥 LOGOUT
+  // 🚪 LOGOUT
   const logout = async () => {
     await signOut(auth);
   };
 
-  // ⏳ Loading (evita pantalla blanca)
+  // ⏳ Loading
   if (loading) {
     return (
       <main style={styles.container}>
@@ -60,13 +88,14 @@ export default function Home() {
     );
   }
 
-  // 🔐 SI NO ESTÁ LOGUEADO → LOGIN SCREEN
+  // 🔐 LOGIN UI
   if (!user) {
     return (
       <main style={styles.container}>
         <h1 style={styles.title}>🔥 FitStartPro</h1>
 
         <input
+          type="email"
           placeholder="Correo"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -92,14 +121,19 @@ export default function Home() {
     );
   }
 
-  // 🔥 APP PRINCIPAL (YA LOGUEADO)
+  // 🔥 APP PRINCIPAL
   return (
     <main style={styles.container}>
       <h1 style={styles.title}>💪 FitStartPro</h1>
 
-      <p style={{ color: "white" }}>
+      <p style={{ color: "white", marginBottom: "10px" }}>
         Bienvenido: {user.email}
       </p>
+
+      <div style={styles.card}>
+        <h3>🔥 Nivel PRO desbloqueado</h3>
+        <p>Ya puedes guardar progreso en la nube próximamente</p>
+      </div>
 
       <button onClick={logout} style={styles.button}>
         Cerrar sesión
@@ -108,7 +142,7 @@ export default function Home() {
   );
 }
 
-// 🎨 ESTILOS
+// 🎨 ESTILOS PRO
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
@@ -122,31 +156,43 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: {
     color: "white",
     marginBottom: "20px",
+    fontSize: "28px",
   },
 
   input: {
-    width: "250px",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "8px",
+    width: "260px",
+    padding: "12px",
+    marginBottom: "12px",
+    borderRadius: "10px",
     border: "none",
+    outline: "none",
   },
 
   button: {
     background: "#22c55e",
     color: "white",
     border: "none",
-    padding: "10px 20px",
-    borderRadius: "8px",
+    padding: "12px 20px",
+    borderRadius: "10px",
     marginTop: "10px",
+    fontWeight: "bold",
   },
 
   buttonSecondary: {
     background: "#16a34a",
     color: "white",
     border: "none",
-    padding: "10px 20px",
-    borderRadius: "8px",
+    padding: "12px 20px",
+    borderRadius: "10px",
     marginTop: "10px",
+  },
+
+  card: {
+    background: "#1f2937",
+    padding: "15px",
+    borderRadius: "12px",
+    marginTop: "15px",
+    color: "white",
+    textAlign: "center",
   },
 };
