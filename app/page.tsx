@@ -6,8 +6,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  User,
   signOut,
+  User,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -80,7 +80,7 @@ function Login() {
       />
 
       <button onClick={login} style={styles.button}>
-        Login
+        Iniciar sesión
       </button>
 
       <button onClick={register} style={styles.button}>
@@ -95,7 +95,6 @@ function Login() {
 //////////////////////////////////////////
 
 function App({ user }: { user: User }) {
-  const [tab, setTab] = useState("rutinas");
   const [completados, setCompletados] = useState<string[]>([]);
 
   const rutinas = [
@@ -105,28 +104,38 @@ function App({ user }: { user: User }) {
     },
     {
       dia: "Día 2 - Espalda",
-      ejercicios: ["Dominadas", "Remo", "Jalón"],
+      ejercicios: ["Dominadas", "Remo con barra", "Jalón al pecho"],
     },
     {
       dia: "Día 3 - Pierna",
-      ejercicios: ["Sentadilla", "Prensa", "Pantorrilla"],
+      ejercicios: ["Sentadillas", "Prensa", "Pantorrillas"],
+    },
+    {
+      dia: "Día 4 - Hombro",
+      ejercicios: ["Press militar", "Elevaciones laterales", "Pájaros"],
     },
   ];
 
   //////////////////////////////////////////
-  // ☁️ CARGAR DESDE FIREBASE
+  // 📥 CARGAR DESDE FIREBASE
   //////////////////////////////////////////
   useEffect(() => {
+    if (!user) return;
+
     const loadData = async () => {
       try {
         const ref = doc(db, "usuarios", user.uid);
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
-          setCompletados(snap.data().completados || []);
+          const data = snap.data();
+          setCompletados(data.completados || []);
+          console.log("📥 Datos cargados");
+        } else {
+          console.log("⚠️ Usuario nuevo");
         }
       } catch (e) {
-        console.log("Error cargando datos");
+        console.log("❌ Error cargando", e);
       }
     };
 
@@ -137,17 +146,23 @@ function App({ user }: { user: User }) {
   // ☁️ GUARDAR EN FIREBASE
   //////////////////////////////////////////
   useEffect(() => {
+    if (!user) return;
+
     const saveData = async () => {
       try {
-        await setDoc(doc(db, "usuarios", user.uid), {
-          completados,
-        });
+        await setDoc(
+          doc(db, "usuarios", user.uid),
+          { completados },
+          { merge: true }
+        );
+
+        console.log("✅ Guardado");
       } catch (e) {
-        console.log("Error guardando");
+        console.log("❌ Error guardando", e);
       }
     };
 
-    if (user) saveData();
+    saveData();
   }, [completados, user]);
 
   const toggle = (ejercicio: string) => {
@@ -166,24 +181,47 @@ function App({ user }: { user: User }) {
         Cerrar sesión
       </button>
 
-      {rutinas.map((r, i) => (
-        <div key={i} style={styles.card}>
-          <h3>{r.dia}</h3>
+      {rutinas.map((rutina, index) => {
+        const completadosDia = rutina.ejercicios.filter((e) =>
+          completados.includes(e)
+        ).length;
 
-          {r.ejercicios.map((e, j) => (
-            <p
-              key={j}
-              onClick={() => toggle(e)}
-              style={{
-                cursor: "pointer",
-                color: completados.includes(e) ? "#22c55e" : "white",
-              }}
-            >
-              {completados.includes(e) ? "✅ " : ""} {e}
-            </p>
-          ))}
-        </div>
-      ))}
+        const total = rutina.ejercicios.length;
+        const porcentaje = Math.round((completadosDia / total) * 100);
+
+        return (
+          <div key={index} style={styles.card}>
+            <h3>{rutina.dia}</h3>
+
+            {/* 🔥 Barra progreso */}
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  ...styles.progressFill,
+                  width: `${porcentaje}%`,
+                }}
+              />
+            </div>
+
+            <p>{porcentaje}% completado</p>
+
+            {rutina.ejercicios.map((ejercicio, i) => (
+              <p
+                key={i}
+                onClick={() => toggle(ejercicio)}
+                style={{
+                  cursor: "pointer",
+                  color: completados.includes(ejercicio)
+                    ? "#22c55e"
+                    : "white",
+                }}
+              >
+                {completados.includes(ejercicio) ? "✅ " : ""} {ejercicio}
+              </p>
+            ))}
+          </div>
+        );
+      })}
     </main>
   );
 }
@@ -229,5 +267,18 @@ const styles: any = {
     color: "white",
     padding: "8px",
     border: "none",
+    borderRadius: "6px",
+  },
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    backgroundColor: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "5px",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#22c55e",
   },
 };
