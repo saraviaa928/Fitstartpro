@@ -51,17 +51,21 @@ export default function Home() {
   // 📥 CARGAR DATOS
   //////////////////////////////////////////
   const cargarDatos = async (uid: string) => {
-    const ref = doc(db, "usuarios", uid);
-    const snap = await getDoc(ref);
+    try {
+      const ref = doc(db, "usuarios", uid);
+      const snap = await getDoc(ref);
 
-    if (snap.exists()) {
-      const data: any = snap.data();
+      if (snap.exists()) {
+        const data: any = snap.data();
 
-      setPeso(data.peso || "");
-      setMeta(data.meta || "");
-      setRacha(data.racha || 0);
-      setProgreso(data.progreso || 0);
-      setPro(data.pro || false);
+        setPeso(data.peso || "");
+        setMeta(data.meta || "");
+        setRacha(data.racha || 0);
+        setProgreso(data.progreso || 0);
+        setPro(data.pro || false);
+      }
+    } catch (error) {
+      console.error("Error cargando datos:", error);
     }
   };
 
@@ -69,36 +73,37 @@ export default function Home() {
   // 💾 GUARDAR DATOS
   //////////////////////////////////////////
   const guardarDatos = async () => {
-    await setDoc(
-      doc(db, "usuarios", user.uid),
-      {
-        email: user.email,
-        peso,
-        meta,
-        racha,
-        progreso,
-        pro,
-      },
-      { merge: true }
-    );
+    try {
+      await setDoc(
+        doc(db, "usuarios", user.uid),
+        {
+          email: user.email,
+          peso,
+          meta,
+          racha,
+          progreso,
+          pro,
+        },
+        { merge: true }
+      );
 
-    alert("✅ Datos guardados");
+      alert("✅ Datos guardados");
+    } catch (error) {
+      alert("Error guardando datos");
+    }
   };
 
   //////////////////////////////////////////
-  // 🔐 LOGIN
+  // 🔐 LOGIN (🔥 FIX DEFINITIVO)
   //////////////////////////////////////////
   const login = async () => {
-    if (!email.includes("@")) {
-      alert("Correo inválido");
-      return;
-    }
-
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
 
+      const ref = doc(db, "usuarios", res.user.uid);
+
       await setDoc(
-        doc(db, "usuarios", res.user.uid),
+        ref,
         {
           email: res.user.email,
           peso: "",
@@ -110,8 +115,10 @@ export default function Home() {
         { merge: true }
       );
 
+      alert("Login correcto");
+
     } catch (err: any) {
-      alert("Error: " + err.message);
+      alert(err.message);
     }
   };
 
@@ -119,11 +126,6 @@ export default function Home() {
   // 🆕 REGISTRO
   //////////////////////////////////////////
   const register = async () => {
-    if (!email.includes("@")) {
-      alert("Correo inválido");
-      return;
-    }
-
     try {
       const res = await createUserWithEmailAndPassword(
         auth,
@@ -140,8 +142,10 @@ export default function Home() {
         pro: false,
       });
 
+      alert("Cuenta creada");
+
     } catch (err: any) {
-      alert("Error: " + err.message);
+      alert(err.message);
     }
   };
 
