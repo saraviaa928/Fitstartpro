@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         },
       ],
 
-      success_url: "https://TU-APP.vercel.app",
+      success_url: "https://fitstartpro.vercel.app",
       cancel_url: "https://TU-APP.vercel.app",
     });
 
