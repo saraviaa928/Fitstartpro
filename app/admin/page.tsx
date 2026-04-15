@@ -9,13 +9,15 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
-const ADMIN_EMAIL = "angelsaravia.1620@gmail.com"; // 🔥 CAMBIA ESTO
+const ADMIN_EMAIL = "angelsaravia.1620@gmail.com";
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   //////////////////////////////////////////
   // 🔐 VALIDAR ADMIN
@@ -23,7 +25,8 @@ export default function AdminPage() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u || u.email !== ADMIN_EMAIL) {
-        window.location.href = "/";
+        setLoading(false);
+        router.push("/");
       } else {
         setUser(u);
         cargarUsuarios();
@@ -41,10 +44,10 @@ export default function AdminPage() {
 
     const data: any[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((docItem) => {
       data.push({
-        id: doc.id,
-        ...doc.data(),
+        id: docItem.id,
+        ...docItem.data(),
       });
     });
 
@@ -77,6 +80,7 @@ export default function AdminPage() {
       {usuarios.map((u) => (
         <div key={u.id} style={styles.card}>
           <p><strong>ID:</strong> {u.id}</p>
+          <p><strong>Email:</strong> {u.email || "-"}</p>
           <p><strong>Peso:</strong> {u.peso || "-"}</p>
           <p><strong>Meta:</strong> {u.meta || "-"}</p>
           <p><strong>Racha:</strong> {u.racha || 0}</p>
