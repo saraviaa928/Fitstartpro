@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const body = await req.text();
   const sig = headers().get("stripe-signature") as string;
 
-  let event: Stripe.Event;
+  let event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -21,12 +21,8 @@ export async function POST(req: Request) {
     return new Response("Webhook error", { status: 400 });
   }
 
-  //////////////////////////////////////////
-  // 🎯 EVENTO DE PAGO EXITOSO
-  //////////////////////////////////////////
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
+    const session = event.data.object as any;
     const userId = session.metadata?.userId;
 
     if (userId) {
