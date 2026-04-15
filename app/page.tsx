@@ -67,7 +67,7 @@ function Login() {
 }
 
 //////////////////////////////////////////
-// 🏋️ APP PRO
+// 🏋️ APP PRO + PAGOS
 //////////////////////////////////////////
 
 function App({ user }: { user: User }) {
@@ -117,7 +117,23 @@ function App({ user }: { user: User }) {
   }, [completados, peso, meta, racha, isPro, user]);
 
   //////////////////////////////////////////
-  // 📊 PROGRESO GLOBAL
+  // 💳 STRIPE
+  //////////////////////////////////////////
+  const comprarPro = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      window.location.href = data.url;
+    } catch (e) {
+      alert("Error al iniciar pago");
+    }
+  };
+
+  //////////////////////////////////////////
+  // 📊 PROGRESO
   //////////////////////////////////////////
   const totalEjercicios = rutinas.reduce((acc, r) => acc + r.ejercicios.length, 0);
   const progresoGlobal = Math.round((completados.length / totalEjercicios) * 100);
@@ -135,17 +151,24 @@ function App({ user }: { user: User }) {
   return (
     <main style={styles.container}>
       <h2>👋 {user.email}</h2>
-      <button onClick={() => signOut(auth)} style={styles.logout}>Cerrar sesión</button>
+
+      <button onClick={() => signOut(auth)} style={styles.logout}>
+        Cerrar sesión
+      </button>
 
       {/* 💎 PRO */}
       <div style={styles.card}>
         <h3>💎 Versión PRO</h3>
+
         {isPro ? (
           <p style={{ color: "#22c55e" }}>Activo ✅</p>
         ) : (
-          <button style={styles.button} onClick={() => setIsPro(true)}>
-            Activar PRO
-          </button>
+          <>
+            <p>Desbloquea todas las rutinas</p>
+            <button style={styles.button} onClick={comprarPro}>
+              Comprar PRO 💳
+            </button>
+          </>
         )}
       </div>
 
@@ -198,11 +221,47 @@ function App({ user }: { user: User }) {
 //////////////////////////////////////////
 
 const styles: any = {
-  container: { minHeight: "100vh", background: "#0f172a", color: "white", padding: "20px", textAlign: "center" },
-  input: { margin: "5px", padding: "10px", borderRadius: "8px" },
-  button: { margin: "10px", padding: "10px", background: "#22c55e", border: "none", borderRadius: "8px", color: "white" },
-  card: { background: "#1f2937", padding: "15px", margin: "10px", borderRadius: "10px" },
-  logout: { background: "red", padding: "8px", border: "none", color: "white" },
-  progressBar: { width: "100%", height: "8px", background: "#374151", borderRadius: "10px" },
-  progressFill: { height: "100%", background: "#22c55e" },
+  container: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+    padding: "20px",
+    textAlign: "center",
+  },
+  input: {
+    margin: "5px",
+    padding: "10px",
+    borderRadius: "8px",
+  },
+  button: {
+    margin: "10px",
+    padding: "10px",
+    background: "#22c55e",
+    border: "none",
+    borderRadius: "8px",
+    color: "white",
+  },
+  card: {
+    background: "#1f2937",
+    padding: "15px",
+    margin: "10px",
+    borderRadius: "10px",
+  },
+  logout: {
+    background: "red",
+    padding: "8px",
+    border: "none",
+    color: "white",
+  },
+  progressBar: {
+    width: "100%",
+    height: "8px",
+    background: "#374151",
+    borderRadius: "10px",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    background: "#22c55e",
+  },
 };
