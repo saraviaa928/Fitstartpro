@@ -1,10 +1,9 @@
 import Stripe from "stripe";
-import { headers } from "next/headers";
 import { db } from "../../../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 
 //////////////////////////////////////////////////////
-// 🔐 CONFIGURACIÓN STRIPE
+// 🔐 CONFIG STRIPE
 //////////////////////////////////////////////////////
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2023-10-16",
@@ -15,7 +14,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 //////////////////////////////////////////////////////
 export async function POST(req: Request) {
   const body = await req.text();
-  const sig = headers().get("stripe-signature") as string;
+
+  // 🔥 USAR HEADERS CORRECTAMENTE
+  const sig = req.headers.get("stripe-signature") as string;
 
   let event: Stripe.Event;
 
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   //////////////////////////////////////////////////////
-  // 💳 EVENTO: PAGO COMPLETADO
+  // 💳 PAGO COMPLETADO
   //////////////////////////////////////////////////////
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     const userId = session.metadata?.userId;
 
     if (!userId) {
-      console.warn("⚠️ No viene userId en metadata");
+      console.warn("⚠️ No viene userId");
       return new Response("No userId", { status: 200 });
     }
 
@@ -53,13 +54,12 @@ export async function POST(req: Request) {
         { merge: true }
       );
 
-      console.log("✅ Usuario activado PRO:", userId);
+      console.log("✅ Usuario PRO activado:", userId);
     } catch (error) {
-      console.error("❌ Error guardando en Firebase:", error);
-      return new Response("Error DB", { status: 500 });
+      console.error("❌ Error Firebase:", error);
+      return new Response("DB error", { status: 500 });
     }
   }
 
-  //////////////////////////////////////////////////////
   return new Response("ok", { status: 200 });
 }
