@@ -57,17 +57,30 @@ function Login() {
     <div style={styles.container}>
       <h1>🔥 FitStartPro</h1>
 
-      <input placeholder="Correo" onChange={(e) => setEmail(e.target.value)} style={styles.input}/>
-      <input placeholder="Contraseña" type="password" onChange={(e) => setPassword(e.target.value)} style={styles.input}/>
+      <input
+        placeholder="Correo"
+        onChange={(e) => setEmail(e.target.value)}
+        style={styles.input}
+      />
+      <input
+        placeholder="Contraseña"
+        type="password"
+        onChange={(e) => setPassword(e.target.value)}
+        style={styles.input}
+      />
 
-      <button onClick={login} style={styles.button}>Login</button>
-      <button onClick={register} style={styles.button}>Crear cuenta</button>
+      <button onClick={login} style={styles.button}>
+        Login
+      </button>
+      <button onClick={register} style={styles.button}>
+        Crear cuenta
+      </button>
     </div>
   );
 }
 
 //////////////////////////////////////////
-// 🏋️ APP PRO + PAGOS
+// 🏋️ APP PRO + STRIPE WEBHOOK READY
 //////////////////////////////////////////
 
 function App({ user }: { user: User }) {
@@ -85,7 +98,7 @@ function App({ user }: { user: User }) {
   ];
 
   //////////////////////////////////////////
-  // 📥 CARGAR
+  // 📥 CARGAR DATOS
   //////////////////////////////////////////
   useEffect(() => {
     const load = async () => {
@@ -103,13 +116,19 @@ function App({ user }: { user: User }) {
   }, [user]);
 
   //////////////////////////////////////////
-  // 💾 GUARDAR
+  // 💾 GUARDAR DATOS
   //////////////////////////////////////////
   useEffect(() => {
     const save = async () => {
       await setDoc(
         doc(db, "usuarios", user.uid),
-        { completados, peso, meta, racha, pro: isPro },
+        {
+          completados,
+          peso,
+          meta,
+          racha,
+          pro: isPro,
+        },
         { merge: true }
       );
     };
@@ -117,12 +136,18 @@ function App({ user }: { user: User }) {
   }, [completados, peso, meta, racha, isPro, user]);
 
   //////////////////////////////////////////
-  // 💳 STRIPE
+  // 💳 STRIPE (ENVÍA USER ID)
   //////////////////////////////////////////
   const comprarPro = async () => {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.uid, // 🔥 CLAVE PARA WEBHOOK
+        }),
       });
 
       const data = await res.json();
@@ -133,11 +158,19 @@ function App({ user }: { user: User }) {
   };
 
   //////////////////////////////////////////
-  // 📊 PROGRESO
+  // 📊 PROGRESO GLOBAL
   //////////////////////////////////////////
-  const totalEjercicios = rutinas.reduce((acc, r) => acc + r.ejercicios.length, 0);
-  const progresoGlobal = Math.round((completados.length / totalEjercicios) * 100);
+  const totalEjercicios = rutinas.reduce(
+    (acc, r) => acc + r.ejercicios.length,
+    0
+  );
 
+  const progresoGlobal = Math.round(
+    (completados.length / totalEjercicios) * 100
+  );
+
+  //////////////////////////////////////////
+  // 🔁 TOGGLE
   //////////////////////////////////////////
   const toggle = (e: string) => {
     if (completados.includes(e)) {
@@ -176,7 +209,12 @@ function App({ user }: { user: User }) {
       <div style={styles.card}>
         <h3>Progreso Total</h3>
         <div style={styles.progressBar}>
-          <div style={{ ...styles.progressFill, width: `${progresoGlobal}%` }}/>
+          <div
+            style={{
+              ...styles.progressFill,
+              width: `${progresoGlobal}%`,
+            }}
+          />
         </div>
         <p>{progresoGlobal}%</p>
       </div>
@@ -188,8 +226,18 @@ function App({ user }: { user: User }) {
 
       {/* 👤 PERFIL */}
       <div style={styles.card}>
-        <input placeholder="Peso" value={peso} onChange={(e) => setPeso(e.target.value)} style={styles.input}/>
-        <input placeholder="Meta" value={meta} onChange={(e) => setMeta(e.target.value)} style={styles.input}/>
+        <input
+          placeholder="Peso"
+          value={peso}
+          onChange={(e) => setPeso(e.target.value)}
+          style={styles.input}
+        />
+        <input
+          placeholder="Meta"
+          value={meta}
+          onChange={(e) => setMeta(e.target.value)}
+          style={styles.input}
+        />
       </div>
 
       {/* 🏋️ RUTINAS */}
@@ -204,8 +252,13 @@ function App({ user }: { user: User }) {
               <p style={{ color: "gray" }}>🔒 Solo PRO</p>
             ) : (
               r.ejercicios.map((e, j) => (
-                <p key={j} onClick={() => toggle(e)} style={{ cursor: "pointer" }}>
-                  {completados.includes(e) ? "✅ " : ""}{e}
+                <p
+                  key={j}
+                  onClick={() => toggle(e)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {completados.includes(e) ? "✅ " : ""}
+                  {e}
                 </p>
               ))
             )}
