@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
-import { db } from "@/lib/firebase";
+import { db } from "../../../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
