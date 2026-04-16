@@ -13,17 +13,15 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  // login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // datos usuario
   const [peso, setPeso] = useState("");
   const [meta, setMeta] = useState("");
   const [racha, setRacha] = useState(0);
@@ -31,92 +29,55 @@ export default function Home() {
   const [pro, setPro] = useState(false);
 
   //////////////////////////////////////////
-  // 🔐 ESCUCHAR LOGIN
+  // 🔐 DETECTAR SESIÓN
   //////////////////////////////////////////
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (u) {
         setUser(u);
-        await cargarDatos(u.uid);
+
+        const ref = doc(db, "usuarios", u.uid);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          setPeso(data.peso || "");
+          setMeta(data.meta || "");
+          setRacha(data.racha || 0);
+          setProgreso(data.progreso || 0);
+          setPro(data.pro || false);
+        }
       } else {
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => unsub();
   }, []);
 
   //////////////////////////////////////////
-  // 📥 CARGAR DATOS
-  //////////////////////////////////////////
-  const cargarDatos = async (uid: string) => {
-    try {
-      const ref = doc(db, "usuarios", uid);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        const data: any = snap.data();
-
-        setPeso(data.peso || "");
-        setMeta(data.meta || "");
-        setRacha(data.racha || 0);
-        setProgreso(data.progreso || 0);
-        setPro(data.pro || false);
-      }
-    } catch (error) {
-      console.error("Error cargando datos:", error);
-    }
-  };
-
-  //////////////////////////////////////////
-  // 💾 GUARDAR DATOS
-  //////////////////////////////////////////
-  const guardarDatos = async () => {
-    try {
-      await setDoc(
-        doc(db, "usuarios", user.uid),
-        {
-          email: user.email,
-          peso,
-          meta,
-          racha,
-          progreso,
-          pro,
-        },
-        { merge: true }
-      );
-
-      alert("✅ Datos guardados");
-    } catch (error) {
-      alert("Error guardando datos");
-    }
-  };
-
-  //////////////////////////////////////////
-  // 🔐 LOGIN (🔥 FIX DEFINITIVO)
+  // 🔑 LOGIN CORREGIDO
   //////////////////////////////////////////
   const login = async () => {
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
 
       const ref = doc(db, "usuarios", res.user.uid);
+      const snap = await getDoc(ref);
 
-      await setDoc(
-        ref,
-        {
+      // 🔥 SOLO crear si NO existe
+      if (!snap.exists()) {
+        await setDoc(ref, {
           email: res.user.email,
           peso: "",
           meta: "",
           racha: 0,
           progreso: 0,
           pro: false,
-        },
-        { merge: true }
-      );
+        });
+      }
 
       alert("Login correcto");
-
     } catch (err: any) {
       alert(err.message);
     }
@@ -127,11 +88,7 @@ export default function Home() {
   //////////////////////////////////////////
   const register = async () => {
     try {
-      const res = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const res = await createUserWithEmailAndPassword(auth, email, password);
 
       await setDoc(doc(db, "usuarios", res.user.uid), {
         email: res.user.email,
@@ -143,22 +100,57 @@ export default function Home() {
       });
 
       alert("Cuenta creada");
-
     } catch (err: any) {
       alert(err.message);
     }
   };
 
   //////////////////////////////////////////
-  if (loading) return <p style={{ color: "white" }}>Cargando...</p>;
+  // 💾 GUARDAR PROGRESO
+  //////////////////////////////////////////
+  const guardar = async () => {
+    if (!user) return;
+
+    const nuevoProgreso =
+      meta && peso
+        ? Math.min((parseFloat(peso) / parseFloat(meta)) * 100, 100)
+        : 0;
+
+    await updateDoc(doc(db, "usuarios", user.uid), {
+      peso,
+      meta,
+      progreso: nuevoProgreso,
+      racha: racha + 1,
+    });
+
+    setProgreso(nuevoProgreso);
+    setRacha(racha + 1);
+
+    alert("Progreso guardado");
+  };
 
   //////////////////////////////////////////
-  // 🔐 NO LOGIN
+  // 💳 PAGO PRO
+  //////////////////////////////////////////
+  const comprarPro = async () => {
+    if (!user) return;
+
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      body: JSON.stringify({ userId: user.uid }),
+    });
+
+    const data = await res.json();
+    window.location.href = data.url;
+  };
+
+  //////////////////////////////////////////
+  // UI LOGIN
   //////////////////////////////////////////
   if (!user) {
     return (
       <main style={styles.container}>
-        <h1>🔥 FitStartPro</h1>
+        <h1>💪 FitStartPro</h1>
 
         <input
           placeholder="Correo"
@@ -187,25 +179,28 @@ export default function Home() {
   }
 
   //////////////////////////////////////////
-  // 🧠 HOME
+  // UI APP
   //////////////////////////////////////////
   return (
     <main style={styles.container}>
-      <h1>👋 {user.email}</h1>
+      <h2>👋 {user.email}</h2>
 
       <button onClick={() => signOut(auth)} style={styles.logout}>
         Cerrar sesión
       </button>
 
+      {/* PROGRESO */}
       <div style={styles.card}>
-        <h2>📊 Progreso Total</h2>
-        <p>{progreso}%</p>
+        <h3>📊 Progreso Total</h3>
+        <p>{Math.round(progreso)}%</p>
       </div>
 
+      {/* RACHA */}
       <div style={styles.card}>
-        <h2>🔥 Racha: {racha}</h2>
+        <h3>🔥 Racha: {racha}</h3>
       </div>
 
+      {/* FORM */}
       <div style={styles.card}>
         <input
           placeholder="Peso"
@@ -221,27 +216,32 @@ export default function Home() {
           style={styles.input}
         />
 
-        <button onClick={guardarDatos} style={styles.button}>
+        <button onClick={guardar} style={styles.button}>
           Guardar progreso
         </button>
       </div>
 
-      {!pro && (
-        <div style={styles.card}>
-          <h2>💎 Versión PRO</h2>
-          <p>Desbloquea todas las rutinas</p>
-          <button style={styles.button}>
+      {/* PRO */}
+      <div style={styles.card}>
+        <h3>💎 Versión PRO</h3>
+        <p>Desbloquea todas las rutinas</p>
+
+        {pro ? (
+          <p style={{ color: "#22c55e" }}>Eres PRO 🔥</p>
+        ) : (
+          <button onClick={comprarPro} style={styles.button}>
             Comprar PRO
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }
 
-//////////////////////////////////////////////////////
+//////////////////////////////////////////
 // 🎨 ESTILOS
-//////////////////////////////////////////////////////
+//////////////////////////////////////////
+
 const styles: any = {
   container: {
     minHeight: "100vh",
@@ -249,35 +249,33 @@ const styles: any = {
     color: "white",
     padding: "20px",
   },
-  input: {
-    display: "block",
-    margin: "10px 0",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "none",
-    width: "100%",
-  },
-  button: {
-    marginTop: "10px",
-    padding: "10px",
-    background: "#22c55e",
-    border: "none",
-    borderRadius: "8px",
-    color: "white",
-    width: "100%",
-  },
-  logout: {
-    background: "red",
-    padding: "10px",
-    border: "none",
-    borderRadius: "8px",
-    color: "white",
-    marginBottom: "20px",
-  },
   card: {
     background: "#1f2937",
     padding: "15px",
     margin: "10px 0",
     borderRadius: "10px",
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    margin: "10px 0",
+    borderRadius: "8px",
+    border: "none",
+  },
+  button: {
+    width: "100%",
+    padding: "10px",
+    background: "#22c55e",
+    border: "none",
+    borderRadius: "8px",
+    color: "white",
+    marginTop: "10px",
+  },
+  logout: {
+    background: "red",
+    padding: "8px",
+    border: "none",
+    color: "white",
+    marginBottom: "20px",
   },
 };
