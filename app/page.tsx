@@ -152,7 +152,9 @@ export default function Home() {
       ) : (
         <>
           <p>👋 {user.email}</p>
-          <p style={{ fontSize: "10px" }}>UID: {user.uid}</p>
+<p style={{ fontSize: "10px", opacity: 0.7 }}>
+  UID: {user.uid}
+</p>
 
           <button style={styles.logout} onClick={() => signOut(auth)}>
             Cerrar sesión
