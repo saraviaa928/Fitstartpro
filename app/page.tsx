@@ -7,12 +7,7 @@ import {
   signOut,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const COLLECTION = "usuarios";
 
@@ -49,18 +44,18 @@ export default function Home() {
       }
 
       alert("Login correcto");
-
     } catch (err: any) {
-  console.error(err);
+      console.error(err);
 
-  if (err.code === "auth/user-not-found") {
-    alert("Usuario no existe");
-  } else if (err.code === "auth/wrong-password") {
-    alert("Contraseña incorrecta");
-  } else {
-    alert("Error: " + err.message);
-  }
-}
+      if (err.code === "auth/user-not-found") {
+        alert("Usuario no existe");
+      } else if (err.code === "auth/wrong-password") {
+        alert("Contraseña incorrecta");
+      } else {
+        alert("Error: " + err.message);
+      }
+    }
+  };
 
   //////////////////////////////////////////
   // SESIÓN
@@ -81,6 +76,8 @@ export default function Home() {
           setRacha(data.racha || 0);
           setPro(data.pro || false);
         }
+      } else {
+        setUser(null);
       }
     });
 
@@ -91,46 +88,44 @@ export default function Home() {
   // GUARDAR
   //////////////////////////////////////////
   const guardar = async () => {
-  try {
-    if (!user) {
-      alert("No hay usuario");
-      return;
+    try {
+      if (!user) {
+        alert("No hay usuario");
+        return;
+      }
+
+      const pesoNum = parseFloat(peso);
+      const metaNum = parseFloat(meta);
+
+      if (isNaN(pesoNum) || isNaN(metaNum)) {
+        alert("Ingresa números válidos");
+        return;
+      }
+
+      const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
+
+      const ref = doc(db, COLLECTION, user.uid);
+
+      await setDoc(
+        ref,
+        {
+          peso,
+          meta,
+          progreso: nuevoProgreso,
+          racha: racha + 1,
+        },
+        { merge: true }
+      );
+
+      setProgreso(nuevoProgreso);
+      setRacha(racha + 1);
+
+      alert("✅ Progreso guardado");
+    } catch (error: any) {
+      console.error(error);
+      alert("❌ Error: " + error.message);
     }
-
-    const pesoNum = parseFloat(peso);
-    const metaNum = parseFloat(meta);
-
-    if (isNaN(pesoNum) || isNaN(metaNum)) {
-      alert("Ingresa números válidos");
-      return;
-    }
-
-    const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
-
-    const ref = doc(db, COLLECTION, user.uid);
-
-    // 🔥 IMPORTANTE: usar setDoc con merge para evitar errores
-    await setDoc(
-      ref,
-      {
-        peso,
-        meta,
-        progreso: nuevoProgreso,
-        racha: racha + 1,
-      },
-      { merge: true }
-    );
-
-    setProgreso(nuevoProgreso);
-    setRacha(racha + 1);
-
-    alert("✅ Progreso guardado");
-
-  } catch (error: any) {
-    console.error(error);
-    alert("❌ Error: " + error.message);
-  }
-};
+  };
 
   //////////////////////////////////////////
   return (
@@ -159,9 +154,10 @@ export default function Home() {
       ) : (
         <>
           <p>👋 {user.email}</p>
-<p style={{ fontSize: "10px", opacity: 0.7 }}>
-  UID: {user.uid}
-</p>
+
+          <p style={{ fontSize: "10px", opacity: 0.7 }}>
+            UID: {user.uid}
+          </p>
 
           <button style={styles.logout} onClick={() => signOut(auth)}>
             Cerrar sesión
@@ -199,9 +195,7 @@ export default function Home() {
           {!pro && (
             <div style={styles.card}>
               <h2>💎 Versión PRO</h2>
-              <button style={styles.button}>
-                Comprar PRO
-              </button>
+              <button style={styles.button}>Comprar PRO</button>
             </div>
           )}
         </>
