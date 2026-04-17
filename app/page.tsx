@@ -14,9 +14,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-//////////////////////////////////////////
-// 🔥 CONSTANTE GLOBAL (ANTI ERRORES)
-//////////////////////////////////////////
 const COLLECTION = "usuarios";
 
 export default function Home() {
@@ -28,9 +25,10 @@ export default function Home() {
   const [meta, setMeta] = useState("");
   const [progreso, setProgreso] = useState(0);
   const [racha, setRacha] = useState(0);
+  const [pro, setPro] = useState(false);
 
   //////////////////////////////////////////
-  // 🔐 LOGIN
+  // LOGIN
   //////////////////////////////////////////
   const login = async () => {
     try {
@@ -39,7 +37,6 @@ export default function Home() {
       const ref = doc(db, COLLECTION, res.user.uid);
       const snap = await getDoc(ref);
 
-      // 🔥 SOLO crea si no existe
       if (!snap.exists()) {
         await setDoc(ref, {
           email: res.user.email,
@@ -59,7 +56,7 @@ export default function Home() {
   };
 
   //////////////////////////////////////////
-  // 🔐 SESIÓN
+  // SESIÓN
   //////////////////////////////////////////
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -75,6 +72,7 @@ export default function Home() {
           setMeta(data.meta || "");
           setProgreso(data.progreso || 0);
           setRacha(data.racha || 0);
+          setPro(data.pro || false);
         }
       }
     });
@@ -83,20 +81,15 @@ export default function Home() {
   }, []);
 
   //////////////////////////////////////////
-  // 💾 GUARDAR PROGRESO
+  // GUARDAR
   //////////////////////////////////////////
   const guardar = async () => {
     if (!user) return;
 
-    if (!peso || !meta) {
-      alert("Completa peso y meta");
-      return;
-    }
-
     const pesoNum = parseFloat(peso);
     const metaNum = parseFloat(meta);
 
-    if (isNaN(pesoNum) || isNaN(metaNum) || metaNum === 0) {
+    if (!pesoNum || !metaNum) {
       alert("Datos inválidos");
       return;
     }
@@ -113,22 +106,19 @@ export default function Home() {
     setProgreso(nuevoProgreso);
     setRacha(racha + 1);
 
-    alert("Progreso guardado");
+    alert("Guardado");
   };
 
   //////////////////////////////////////////
-  // 🎨 UI
-  //////////////////////////////////////////
   return (
     <main style={styles.container}>
-      <h1 style={styles.title}>💪 FitStartPro</h1>
+      <h1>💪 FitStartPro</h1>
 
       {!user ? (
         <>
           <input
             style={styles.input}
             placeholder="Correo"
-            value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
@@ -136,24 +126,24 @@ export default function Home() {
             style={styles.input}
             placeholder="Contraseña"
             type="password"
-            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <button style={styles.button} onClick={login}>
-            Iniciar sesión
+            Login
           </button>
         </>
       ) : (
         <>
           <p>👋 {user.email}</p>
+          <p style={{ fontSize: "10px" }}>UID: {user.uid}</p>
 
           <button style={styles.logout} onClick={() => signOut(auth)}>
             Cerrar sesión
           </button>
 
           <div style={styles.card}>
-            <h2>📊 Progreso Total</h2>
+            <h2>📊 Progreso</h2>
             <p>{progreso.toFixed(0)}%</p>
           </div>
 
@@ -180,15 +170,20 @@ export default function Home() {
               Guardar progreso
             </button>
           </div>
+
+          {!pro && (
+            <div style={styles.card}>
+              <h2>💎 Versión PRO</h2>
+              <button style={styles.button}>
+                Comprar PRO
+              </button>
+            </div>
+          )}
         </>
       )}
     </main>
   );
 }
-
-//////////////////////////////////////////
-// 🎨 ESTILOS
-//////////////////////////////////////////
 
 const styles: any = {
   container: {
@@ -196,10 +191,6 @@ const styles: any = {
     background: "#0f172a",
     color: "white",
     padding: "20px",
-  },
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
   },
   input: {
     width: "100%",
@@ -222,7 +213,6 @@ const styles: any = {
     padding: "8px",
     border: "none",
     color: "white",
-    margin: "10px 0",
   },
   card: {
     background: "#1f2937",
