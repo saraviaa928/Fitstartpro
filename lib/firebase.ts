@@ -5,12 +5,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AQUI_TU_API_KEY_REAL",
-  authDomain: "AQUI_TU_AUTH_DOMAIN_REAL",
-  projectId: "AQUI_TU_PROJECT_ID_REAL",
-  storageBucket: "AQUI_TU_STORAGE_BUCKET_REAL",
-  messagingSenderId: "AQUI_TU_SENDER_ID_REAL",
-  appId: "AQUI_TU_APP_ID_REAL",
+  apiKey: "AIzaSyBaOuz28cLkd8GRT6e_3w4S8kYKBnloq6s",
+  authDomain: "fitstartpro-e8392.firebaseapp.com",
+  projectId: "fitstartpro-e8392",
+  storageBucket: "fitstartpro-e8392.firebasestorage.app",
+  messagingSenderId: "1073053557711",
+  appId: "1:1073053557711:web:6288c0228f1f72727e68ba",
+  measurementId: "G-ZKF14WM4HV"
 };
 
 const app = initializeApp(firebaseConfig);
