@@ -84,30 +84,46 @@ export default function Home() {
   // GUARDAR
   //////////////////////////////////////////
   const guardar = async () => {
-    if (!user) return;
+  try {
+    if (!user) {
+      alert("No hay usuario");
+      return;
+    }
 
     const pesoNum = parseFloat(peso);
     const metaNum = parseFloat(meta);
 
-    if (!pesoNum || !metaNum) {
-      alert("Datos inválidos");
+    if (isNaN(pesoNum) || isNaN(metaNum)) {
+      alert("Ingresa números válidos");
       return;
     }
 
     const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
 
-    await updateDoc(doc(db, COLLECTION, user.uid), {
-      peso,
-      meta,
-      progreso: nuevoProgreso,
-      racha: racha + 1,
-    });
+    const ref = doc(db, COLLECTION, user.uid);
+
+    // 🔥 IMPORTANTE: usar setDoc con merge para evitar errores
+    await setDoc(
+      ref,
+      {
+        peso,
+        meta,
+        progreso: nuevoProgreso,
+        racha: racha + 1,
+      },
+      { merge: true }
+    );
 
     setProgreso(nuevoProgreso);
     setRacha(racha + 1);
 
-    alert("Guardado");
-  };
+    alert("✅ Progreso guardado");
+
+  } catch (error: any) {
+    console.error(error);
+    alert("❌ Error: " + error.message);
+  }
+};
 
   //////////////////////////////////////////
   return (
