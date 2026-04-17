@@ -51,9 +51,16 @@ export default function Home() {
       alert("Login correcto");
 
     } catch (err: any) {
-      alert(err.message);
-    }
-  };
+  console.error(err);
+
+  if (err.code === "auth/user-not-found") {
+    alert("Usuario no existe");
+  } else if (err.code === "auth/wrong-password") {
+    alert("Contraseña incorrecta");
+  } else {
+    alert("Error: " + err.message);
+  }
+}
 
   //////////////////////////////////////////
   // SESIÓN
