@@ -1,6 +1,6 @@
 // lib/firebase.ts
 
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -9,11 +9,12 @@ const firebaseConfig = {
   authDomain: "fitstartpro-e8392.firebaseapp.com",
   projectId: "fitstartpro-e8392",
   storageBucket: "fitstartpro-e8392.firebasestorage.app",
-  messagingSenderId: "TU_ID",
-  appId: "TU_APP_ID"
+  messagingSenderId: "AQUI_TU_REAL_ID",
+  appId: "AQUI_TU_REAL_APP_ID"
 };
 
-const app = initializeApp(firebaseConfig);
+// 🔥 Evita reinicialización en Next.js (MUY IMPORTANTE)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
