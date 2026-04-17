@@ -5,9 +5,9 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBRiGWCAxMeW8kV0iYb5rxhH-XBOGDkKIc",
+  apiKey: "TU_API_KEY",
   authDomain: "TU_PROJECT.firebaseapp.com",
-  projectId: "TU_PROJECT",
+  projectId: "TU_PROJECT_ID",
   storageBucket: "TU_PROJECT.appspot.com",
   messagingSenderId: "XXXX",
   appId: "XXXX",
