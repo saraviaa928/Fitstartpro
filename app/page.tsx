@@ -26,57 +26,55 @@ export default function Home() {
   // LOGIN
   //////////////////////////////////////////
   const login = async () => {
-  try {
-    const cleanEmail = email.trim();
-    const cleanPassword = password.trim();
+    try {
+      const cleanEmail = email.trim();
+      const cleanPassword = password.trim();
 
-    // Validación básica
-    if (!cleanEmail || !cleanPassword) {
-      alert("Completa todos los campos");
-      return;
+      if (!cleanEmail || !cleanPassword) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      if (!cleanEmail.includes("@")) {
+        alert("Correo inválido");
+        return;
+      }
+
+      const res = await signInWithEmailAndPassword(
+        auth,
+        cleanEmail,
+        cleanPassword
+      );
+
+      const ref = doc(db, COLLECTION, res.user.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          email: res.user.email,
+          peso: "",
+          meta: "",
+          racha: 0,
+          progreso: 0,
+          pro: false,
+        });
+      }
+
+      alert("Login correcto");
+    } catch (err: any) {
+      console.error(err);
+
+      if (err.code === "auth/invalid-email") {
+        alert("Correo inválido");
+      } else if (err.code === "auth/user-not-found") {
+        alert("Usuario no existe");
+      } else if (err.code === "auth/wrong-password") {
+        alert("Contraseña incorrecta");
+      } else {
+        alert("Error: " + err.message);
+      }
     }
-
-    if (!cleanEmail.includes("@")) {
-      alert("Correo inválido");
-      return;
-    }
-
-    const res = await signInWithEmailAndPassword(
-      auth,
-      cleanEmail,
-      cleanPassword
-    );
-
-    const ref = doc(db, COLLECTION, res.user.uid);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      await setDoc(ref, {
-        email: res.user.email,
-        peso: "",
-        meta: "",
-        racha: 0,
-        progreso: 0,
-        pro: false,
-      });
-    }
-
-    alert("Login correcto");
-
-  } catch (err: any) {
-    console.error(err);
-
-    if (err.code === "auth/invalid-email") {
-      alert("Correo inválido");
-    } else if (err.code === "auth/user-not-found") {
-      alert("Usuario no existe");
-    } else if (err.code === "auth/wrong-password") {
-      alert("Contraseña incorrecta");
-    } else {
-      alert("Error: " + err.message);
-    }
-  }
-};
+  };
 
   //////////////////////////////////////////
   // SESIÓN
@@ -157,7 +155,10 @@ export default function Home() {
         <>
           <input
             style={styles.input}
-            placeholder="Correo"
+            placeholder="Correo electrónico"
+            type="email"
+            autoComplete="email"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
@@ -165,6 +166,8 @@ export default function Home() {
             style={styles.input}
             placeholder="Contraseña"
             type="password"
+            autoComplete="current-password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
@@ -225,23 +228,13 @@ export default function Home() {
   );
 }
 
-<input
-  style={styles.input}
-  placeholder="Correo electrónico"
-  type="email"
-  autoComplete="email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-/>
-
-<input
-  style={styles.input}
-  placeholder="Contraseña"
-  type="password"
-  autoComplete="current-password"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-/>
+const styles: any = {
+  container: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    color: "white",
+    padding: "20px",
+  },
   input: {
     width: "100%",
     padding: "10px",
