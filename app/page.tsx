@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../lib/firebase";
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
-
 import {
   doc,
   setDoc,
@@ -16,56 +14,32 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+//////////////////////////////////////////
+// 🔥 CONSTANTE GLOBAL (ANTI ERRORES)
+//////////////////////////////////////////
+const COLLECTION = "usuarios";
+
 export default function Home() {
   const [user, setUser] = useState<any>(null);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [peso, setPeso] = useState("");
   const [meta, setMeta] = useState("");
-  const [racha, setRacha] = useState(0);
   const [progreso, setProgreso] = useState(0);
-  const [pro, setPro] = useState(false);
+  const [racha, setRacha] = useState(0);
 
   //////////////////////////////////////////
-  // 🔐 DETECTAR SESIÓN
-  //////////////////////////////////////////
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u);
-
-        const ref = doc(db, "usuarios", u.uid);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          const data = snap.data();
-          setPeso(data.peso || "");
-          setMeta(data.meta || "");
-          setRacha(data.racha || 0);
-          setProgreso(data.progreso || 0);
-          setPro(data.pro || false);
-        }
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => unsub();
-  }, []);
-
-  //////////////////////////////////////////
-  // 🔑 LOGIN CORREGIDO
+  // 🔐 LOGIN
   //////////////////////////////////////////
   const login = async () => {
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
 
-      const ref = doc(db, "usuarios", res.user.uid);
+      const ref = doc(db, COLLECTION, res.user.uid);
       const snap = await getDoc(ref);
 
-      // 🔥 SOLO crear si NO existe
+      // 🔥 SOLO crea si no existe
       if (!snap.exists()) {
         await setDoc(ref, {
           email: res.user.email,
@@ -78,172 +52,136 @@ export default function Home() {
       }
 
       alert("Login correcto");
+
     } catch (err: any) {
       alert(err.message);
     }
   };
 
   //////////////////////////////////////////
-  // 🆕 REGISTRO
+  // 🔐 SESIÓN
   //////////////////////////////////////////
-  const register = async () => {
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        setUser(u);
 
-      await setDoc(doc(db, "usuarios", res.user.uid), {
-        email: res.user.email,
-        peso: "",
-        meta: "",
-        racha: 0,
-        progreso: 0,
-        pro: false,
-      });
+        const ref = doc(db, COLLECTION, u.uid);
+        const snap = await getDoc(ref);
 
-      alert("Cuenta creada");
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
+        if (snap.exists()) {
+          const data: any = snap.data();
+          setPeso(data.peso || "");
+          setMeta(data.meta || "");
+          setProgreso(data.progreso || 0);
+          setRacha(data.racha || 0);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, []);
 
   //////////////////////////////////////////
   // 💾 GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
-  if (!user) return;
-
-  if (!peso || !meta) {
-    alert("Completa peso y meta");
-    return;
-  }
-
-  const pesoNum = parseFloat(peso);
-  const metaNum = parseFloat(meta);
-
-  if (isNaN(pesoNum) || isNaN(metaNum) || metaNum === 0) {
-    alert("Datos inválidos");
-    return;
-  }
-
-  const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
-
-  await updateDoc(doc(db, "usuarios", user.uid), {
-    peso,
-    meta,
-    progreso: nuevoProgreso,
-    racha: racha + 1,
-  });
-
-  setProgreso(nuevoProgreso);
-  setRacha(racha + 1);
-
-  alert("Progreso guardado");
-};
-
-  //////////////////////////////////////////
-  // 💳 PAGO PRO
-  //////////////////////////////////////////
-  const comprarPro = async () => {
     if (!user) return;
 
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      body: JSON.stringify({ userId: user.uid }),
+    if (!peso || !meta) {
+      alert("Completa peso y meta");
+      return;
+    }
+
+    const pesoNum = parseFloat(peso);
+    const metaNum = parseFloat(meta);
+
+    if (isNaN(pesoNum) || isNaN(metaNum) || metaNum === 0) {
+      alert("Datos inválidos");
+      return;
+    }
+
+    const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
+
+    await updateDoc(doc(db, COLLECTION, user.uid), {
+      peso,
+      meta,
+      progreso: nuevoProgreso,
+      racha: racha + 1,
     });
 
-    const data = await res.json();
-    window.location.href = data.url;
+    setProgreso(nuevoProgreso);
+    setRacha(racha + 1);
+
+    alert("Progreso guardado");
   };
 
   //////////////////////////////////////////
-  // UI LOGIN
-  //////////////////////////////////////////
-  if (!user) {
-    return (
-      <main style={styles.container}>
-        <h1>💪 FitStartPro</h1>
-
-        <input
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
-
-        <input
-          placeholder="Contraseña"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
-
-        <button onClick={login} style={styles.button}>
-          Login
-        </button>
-
-        <button onClick={register} style={styles.button}>
-          Crear cuenta
-        </button>
-      </main>
-    );
-  }
-
-  //////////////////////////////////////////
-  // UI APP
+  // 🎨 UI
   //////////////////////////////////////////
   return (
     <main style={styles.container}>
-      <h2>👋 {user.email}</h2>
+      <h1 style={styles.title}>💪 FitStartPro</h1>
 
-      <button onClick={() => signOut(auth)} style={styles.logout}>
-        Cerrar sesión
-      </button>
+      {!user ? (
+        <>
+          <input
+            style={styles.input}
+            placeholder="Correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-      {/* PROGRESO */}
-      <div style={styles.card}>
-        <h3>📊 Progreso Total</h3>
-        <p>{Math.round(progreso)}%</p>
-      </div>
+          <input
+            style={styles.input}
+            placeholder="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      {/* RACHA */}
-      <div style={styles.card}>
-        <h3>🔥 Racha: {racha}</h3>
-      </div>
-
-      {/* FORM */}
-      <div style={styles.card}>
-        <input
-          placeholder="Peso"
-          value={peso}
-          onChange={(e) => setPeso(e.target.value)}
-          style={styles.input}
-        />
-
-        <input
-          placeholder="Meta"
-          value={meta}
-          onChange={(e) => setMeta(e.target.value)}
-          style={styles.input}
-        />
-
-        <button onClick={guardar} style={styles.button}>
-          Guardar progreso
-        </button>
-      </div>
-
-      {/* PRO */}
-      <div style={styles.card}>
-        <h3>💎 Versión PRO</h3>
-        <p>Desbloquea todas las rutinas</p>
-
-        {pro ? (
-          <p style={{ color: "#22c55e" }}>Eres PRO 🔥</p>
-        ) : (
-          <button onClick={comprarPro} style={styles.button}>
-            Comprar PRO
+          <button style={styles.button} onClick={login}>
+            Iniciar sesión
           </button>
-        )}
-      </div>
+        </>
+      ) : (
+        <>
+          <p>👋 {user.email}</p>
+
+          <button style={styles.logout} onClick={() => signOut(auth)}>
+            Cerrar sesión
+          </button>
+
+          <div style={styles.card}>
+            <h2>📊 Progreso Total</h2>
+            <p>{progreso.toFixed(0)}%</p>
+          </div>
+
+          <div style={styles.card}>
+            <h2>🔥 Racha: {racha}</h2>
+          </div>
+
+          <div style={styles.card}>
+            <input
+              style={styles.input}
+              placeholder="Peso"
+              value={peso}
+              onChange={(e) => setPeso(e.target.value)}
+            />
+
+            <input
+              style={styles.input}
+              placeholder="Meta"
+              value={meta}
+              onChange={(e) => setMeta(e.target.value)}
+            />
+
+            <button style={styles.button} onClick={guardar}>
+              Guardar progreso
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }
@@ -259,16 +197,14 @@ const styles: any = {
     color: "white",
     padding: "20px",
   },
-  card: {
-    background: "#1f2937",
-    padding: "15px",
-    margin: "10px 0",
-    borderRadius: "10px",
+  title: {
+    fontSize: "28px",
+    marginBottom: "20px",
   },
   input: {
     width: "100%",
     padding: "10px",
-    margin: "10px 0",
+    margin: "5px 0",
     borderRadius: "8px",
     border: "none",
   },
@@ -286,6 +222,12 @@ const styles: any = {
     padding: "8px",
     border: "none",
     color: "white",
-    marginBottom: "20px",
+    margin: "10px 0",
+  },
+  card: {
+    background: "#1f2937",
+    padding: "15px",
+    marginTop: "15px",
+    borderRadius: "10px",
   },
 };
