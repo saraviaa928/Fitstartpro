@@ -225,13 +225,23 @@ export default function Home() {
   );
 }
 
-const styles: any = {
-  container: {
-    minHeight: "100vh",
-    background: "#0f172a",
-    color: "white",
-    padding: "20px",
-  },
+<input
+  style={styles.input}
+  placeholder="Correo electrónico"
+  type="email"
+  autoComplete="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
+
+<input
+  style={styles.input}
+  placeholder="Contraseña"
+  type="password"
+  autoComplete="current-password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
   input: {
     width: "100%",
     padding: "10px",
