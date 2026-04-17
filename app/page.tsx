@@ -109,25 +109,35 @@ export default function Home() {
   // 💾 GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
-    if (!user) return;
+  if (!user) return;
 
-    const nuevoProgreso =
-      meta && peso
-        ? Math.min((parseFloat(peso) / parseFloat(meta)) * 100, 100)
-        : 0;
+  if (!peso || !meta) {
+    alert("Completa peso y meta");
+    return;
+  }
 
-    await updateDoc(doc(db, "usuarios", user.uid), {
-      peso,
-      meta,
-      progreso: nuevoProgreso,
-      racha: racha + 1,
-    });
+  const pesoNum = parseFloat(peso);
+  const metaNum = parseFloat(meta);
 
-    setProgreso(nuevoProgreso);
-    setRacha(racha + 1);
+  if (isNaN(pesoNum) || isNaN(metaNum) || metaNum === 0) {
+    alert("Datos inválidos");
+    return;
+  }
 
-    alert("Progreso guardado");
-  };
+  const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
+
+  await updateDoc(doc(db, "usuarios", user.uid), {
+    peso,
+    meta,
+    progreso: nuevoProgreso,
+    racha: racha + 1,
+  });
+
+  setProgreso(nuevoProgreso);
+  setRacha(racha + 1);
+
+  alert("Progreso guardado");
+};
 
   //////////////////////////////////////////
   // 💳 PAGO PRO
