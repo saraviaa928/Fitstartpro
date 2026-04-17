@@ -9,8 +9,8 @@ const firebaseConfig = {
   authDomain: "fitstartpro-e8392.firebaseapp.com",
   projectId: "fitstartpro-e8392",
   storageBucket: "fitstartpro-e8392.firebasestorage.app",
-  messagingSenderId: "AQUI_TU_REAL_ID",
-  appId: "AQUI_TU_REAL_APP_ID"
+  messagingSenderId: "1073053557711",
+  appId: "1:1073053557711:web:6288c0228f1f72727e68ba"
 };
 
 // 🔥 Evita reinicialización en Next.js (MUY IMPORTANTE)
