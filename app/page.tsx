@@ -26,36 +26,57 @@ export default function Home() {
   // LOGIN
   //////////////////////////////////////////
   const login = async () => {
-    try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
+  try {
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
 
-      const ref = doc(db, COLLECTION, res.user.uid);
-      const snap = await getDoc(ref);
-
-      if (!snap.exists()) {
-        await setDoc(ref, {
-          email: res.user.email,
-          peso: "",
-          meta: "",
-          racha: 0,
-          progreso: 0,
-          pro: false,
-        });
-      }
-
-      alert("Login correcto");
-    } catch (err: any) {
-      console.error(err);
-
-      if (err.code === "auth/user-not-found") {
-        alert("Usuario no existe");
-      } else if (err.code === "auth/wrong-password") {
-        alert("Contraseña incorrecta");
-      } else {
-        alert("Error: " + err.message);
-      }
+    // Validación básica
+    if (!cleanEmail || !cleanPassword) {
+      alert("Completa todos los campos");
+      return;
     }
-  };
+
+    if (!cleanEmail.includes("@")) {
+      alert("Correo inválido");
+      return;
+    }
+
+    const res = await signInWithEmailAndPassword(
+      auth,
+      cleanEmail,
+      cleanPassword
+    );
+
+    const ref = doc(db, COLLECTION, res.user.uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        email: res.user.email,
+        peso: "",
+        meta: "",
+        racha: 0,
+        progreso: 0,
+        pro: false,
+      });
+    }
+
+    alert("Login correcto");
+
+  } catch (err: any) {
+    console.error(err);
+
+    if (err.code === "auth/invalid-email") {
+      alert("Correo inválido");
+    } else if (err.code === "auth/user-not-found") {
+      alert("Usuario no existe");
+    } else if (err.code === "auth/wrong-password") {
+      alert("Contraseña incorrecta");
+    } else {
+      alert("Error: " + err.message);
+    }
+  }
+};
 
   //////////////////////////////////////////
   // SESIÓN
