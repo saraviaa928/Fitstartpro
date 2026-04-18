@@ -5,26 +5,41 @@ import Navbar from "../../components/Navbar";
 import useAuth from "../../hooks/useAuth";
 import { getUserData } from "../../services/userService";
 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
 export default function Dashboard() {
   const user = useAuth();
 
-  const [progreso, setProgreso] = useState(0);
+  const [data, setData] = useState<any[]>([]);
   const [racha, setRacha] = useState(0);
-  const [peso, setPeso] = useState(0);
-  const [meta, setMeta] = useState(0);
+  const [progreso, setProgreso] = useState(0);
 
   //////////////////////////////////////////
   useEffect(() => {
     const load = async () => {
       if (!user) return;
 
-      const data: any = await getUserData(user.uid);
+      const userData: any = await getUserData(user.uid);
 
-      if (data) {
-        setProgreso(data.progreso || 0);
-        setRacha(data.racha || 0);
-        setPeso(parseFloat(data.peso || 0));
-        setMeta(parseFloat(data.meta || 0));
+      if (userData) {
+        setRacha(userData.racha || 0);
+        setProgreso(userData.progreso || 0);
+
+        // 🔥 datos simulados (puedes luego guardarlos en Firebase)
+        setData([
+          { dia: "Lun", peso: 70 },
+          { dia: "Mar", peso: 69.5 },
+          { dia: "Mié", peso: 69 },
+          { dia: "Jue", peso: 68.8 },
+          { dia: "Vie", peso: 68.5 },
+        ]);
       }
     };
 
@@ -36,35 +51,37 @@ export default function Dashboard() {
     <main style={styles.container}>
       <h1 style={styles.title}>📊 Dashboard</h1>
 
+      {/* 🔥 GRÁFICA */}
+      <div style={styles.card}>
+        <h3>Progreso de peso</h3>
+
+        <div style={{ width: "100%", height: 250 }}>
+          <ResponsiveContainer>
+            <LineChart data={data}>
+              <XAxis dataKey="dia" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="peso"
+                stroke="#22c55e"
+                strokeWidth={3}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* PROGRESO */}
       <div style={styles.card}>
-        <h3>Progreso general</h3>
-
-        <div style={styles.progressCircle}>
-          <span>{progreso.toFixed(0)}%</span>
-        </div>
+        <h3>Progreso</h3>
+        <p style={styles.big}>{progreso.toFixed(0)}%</p>
       </div>
 
       {/* RACHA */}
       <div style={styles.card}>
         <h3>🔥 Racha</h3>
         <p style={styles.big}>{racha} días</p>
-      </div>
-
-      {/* PESO */}
-      <div style={styles.card}>
-        <h3>⚖️ Peso</h3>
-        <p>
-          {peso} kg / {meta} kg
-        </p>
-      </div>
-
-      {/* RESUMEN */}
-      <div style={styles.card}>
-        <h3>Resumen</h3>
-        <p>
-          Te falta {Math.max(meta - peso, 0)} kg para tu meta 💪
-        </p>
       </div>
 
       <Navbar />
@@ -95,19 +112,6 @@ const styles: any = {
 
   big: {
     fontSize: "28px",
-    fontWeight: "bold",
-  },
-
-  progressCircle: {
-    marginTop: "10px",
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    border: "10px solid #22c55e",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "20px",
     fontWeight: "bold",
   },
 };
