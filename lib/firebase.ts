@@ -5,15 +5,15 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBaOuz28cLkd8GRT6e_3w4S8kYKBnloq6s",
+  apiKey: "TU_API_KEY",
   authDomain: "fitstartpro-e8392.firebaseapp.com",
   projectId: "fitstartpro-e8392",
   storageBucket: "fitstartpro-e8392.firebasestorage.app",
-  messagingSenderId: "1073053557711",
-  appId: "1:1073053557711:web:6288c0228f1f72727e68ba"
+  messagingSenderId: "TU_MESSAGING_ID",
+  appId: "TU_APP_ID",
 };
 
-// 🔥 Evita reinicialización en Next.js (MUY IMPORTANTE)
+// 🔥 evita reinicialización en Next.js
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
