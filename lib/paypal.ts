@@ -3,12 +3,12 @@ const base =
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 
-async function generateAccessToken() {
+async function getToken() {
   const auth = Buffer.from(
     process.env.PAYPAL_CLIENT_ID + ":" + process.env.PAYPAL_CLIENT_SECRET
   ).toString("base64");
 
-  const response = await fetch(`${base}/v1/oauth2/token`, {
+  const res = await fetch(`${base}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -17,47 +17,39 @@ async function generateAccessToken() {
     body: "grant_type=client_credentials",
   });
 
-  const data = await response.json();
-  return data.access_token;
+  return (await res.json()).access_token;
 }
 
 export async function createOrder(value: string) {
-  const accessToken = await generateAccessToken();
+  const token = await getToken();
 
-  const response = await fetch(`${base}/v2/checkout/orders`, {
+  const res = await fetch(`${base}/v2/checkout/orders`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value,
-          },
-        },
-      ],
+      purchase_units: [{ amount: { currency_code: "USD", value } }],
     }),
   });
 
-  return response.json();
+  return res.json();
 }
 
 export async function captureOrder(orderId: string) {
-  const accessToken = await generateAccessToken();
+  const token = await getToken();
 
-  const response = await fetch(
+  const res = await fetch(
     `${base}/v2/checkout/orders/${orderId}/capture`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );
 
-  return response.json();
+  return res.json();
 }
