@@ -48,9 +48,7 @@ export default function Home() {
 
     try {
       setLoading(true);
-
       await signInWithEmailAndPassword(auth, email.trim(), password.trim());
-
       alert("✅ Bienvenido");
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
@@ -249,6 +247,14 @@ export default function Home() {
               Guardar progreso
             </button>
           </div>
+
+          {/* 🔥 NUEVO BOTÓN */}
+          <button
+            style={styles.primaryBtn}
+            onClick={() => (window.location.href = "/rutinas")}
+          >
+            Ver rutinas
+          </button>
 
           {!pro && (
             <div style={styles.proCard}>
