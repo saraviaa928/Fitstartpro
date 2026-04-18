@@ -11,6 +11,15 @@ import {
   updateUserData,
 } from "../services/userService";
 
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/firebase";
+
+declare global {
+  interface Window {
+    paypal: any;
+  }
+}
+
 export default function Home() {
   const user = useAuth();
 
@@ -21,6 +30,7 @@ export default function Home() {
   const [meta, setMeta] = useState("");
   const [progreso, setProgreso] = useState(0);
   const [racha, setRacha] = useState(0);
+  const [premium, setPremium] = useState(false);
 
   //////////////////////////////////////////
   // LOGIN / REGISTER
@@ -29,16 +39,15 @@ export default function Home() {
     try {
       const res = await loginUser(email, password);
 
-      // cargar datos si ya existe
       const data: any = await getUserData(res.user.uid);
       if (data) {
         setPeso(data.peso || "");
         setMeta(data.meta || "");
         setProgreso(data.progreso || 0);
         setRacha(data.racha || 0);
+        setPremium(data.premium || false);
       }
     } catch (err: any) {
-      // si no existe → registrar
       const res = await registerUser(email, password);
 
       await createUserDoc(res.user.uid, email);
@@ -61,6 +70,7 @@ export default function Home() {
         setMeta(data.meta || "");
         setProgreso(data.progreso || 0);
         setRacha(data.racha || 0);
+        setPremium(data.premium || false);
       }
     };
 
@@ -97,6 +107,69 @@ export default function Home() {
   };
 
   //////////////////////////////////////////
+  // PAYPAL (CARGAR BOTÓN)
+  //////////////////////////////////////////
+  useEffect(() => {
+    if (!user) return;
+    if (document.getElementById("paypal-sdk")) return;
+
+    const script = document.createElement("script");
+    script.id = "paypal-sdk";
+    script.src =
+      "https://www.paypal.com/sdk/js?AWNvCSGUeVqyDhJXfy0fkzL2dk1Up7jRkBPGquiJe_AKejBJIq_ia9fOkODqJbtGORoGil_u5kRWrEQv&currency=USD";
+    script.async = true;
+
+    script.onload = () => {
+      if (!window.paypal) return;
+
+      window.paypal
+        .Buttons({
+          createOrder: async () => {
+            const res = await fetch("/api/paypal/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ value: "9.99" }),
+            });
+
+            const data = await res.json();
+            return data.id;
+          },
+
+          onApprove: async (data: any) => {
+            const res = await fetch("/api/paypal/capture-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: data.orderID }),
+            });
+
+            const details = await res.json();
+
+            if (details.status === "COMPLETED" && user) {
+              // 🔥 ACTIVAR PREMIUM EN FIREBASE
+              await setDoc(
+                doc(db, "usuarios", user.uid),
+                {
+                  premium: true,
+                  plan: "pro",
+                  paymentMethod: "paypal",
+                  updatedAt: new Date(),
+                },
+                { merge: true }
+              );
+
+              setPremium(true);
+
+              alert("🎉 Usuario Premium activado");
+            }
+          },
+        })
+        .render("#paypal-button");
+    };
+
+    document.body.appendChild(script);
+  }, [user]);
+
+  //////////////////////////////////////////
   return (
     <main style={styles.container}>
       <h1 style={styles.title}>💪 FitStartPro</h1>
@@ -128,7 +201,19 @@ export default function Home() {
         <>
           <div style={styles.card}>
             <p>👋 {user.email}</p>
+            <p>
+              Estado: {premium ? "🔥 PREMIUM" : "FREE"}
+            </p>
           </div>
+
+          {/* 💳 PAYPAL SOLO SI NO ES PREMIUM */}
+          {!premium && (
+            <div style={styles.card}>
+              <h3>💳 Desbloquear Premium</h3>
+              <p>$9.99 USD</p>
+              <div id="paypal-button" />
+            </div>
+          )}
 
           <div style={styles.card}>
             <h3>📊 Progreso</h3>
@@ -170,7 +255,6 @@ export default function Home() {
         </>
       )}
 
-      {/* 🔥 NAVBAR */}
       <Navbar />
     </main>
   );
@@ -184,19 +268,16 @@ const styles: any = {
     padding: "20px",
     paddingBottom: "80px",
   },
-
   title: {
     fontSize: "26px",
     fontWeight: "bold",
   },
-
   card: {
     background: "#1e293b",
     padding: "15px",
     marginTop: "15px",
     borderRadius: "12px",
   },
-
   input: {
     width: "100%",
     padding: "12px",
@@ -206,7 +287,6 @@ const styles: any = {
     background: "#0f172a",
     color: "white",
   },
-
   btn: {
     width: "100%",
     padding: "12px",
@@ -217,20 +297,17 @@ const styles: any = {
     color: "white",
     fontWeight: "bold",
   },
-
   progressBar: {
     height: "10px",
     background: "#334155",
     borderRadius: "10px",
     marginTop: "10px",
   },
-
   progressFill: {
     height: "100%",
     background: "#22c55e",
     borderRadius: "10px",
   },
-
   big: {
     fontSize: "28px",
     fontWeight: "bold",
