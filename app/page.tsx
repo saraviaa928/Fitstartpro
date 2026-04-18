@@ -14,96 +14,126 @@ const COLLECTION = "usuarios";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState(0);
 
   const [peso, setPeso] = useState("");
   const [meta, setMeta] = useState("");
   const [progreso, setProgreso] = useState(0);
   const [racha, setRacha] = useState(0);
-  const [pro, setPro] = useState(false);
 
   //////////////////////////////////////////
-  // LOGIN + REGISTRO AUTOMÁTICO
+  // 🔐 VALIDACIÓN ANTI-SPAM
+  //////////////////////////////////////////
+  const canAttempt = () => {
+    const now = Date.now();
+    if (now - lastAttempt < 2000) {
+      alert("⏳ Espera 2 segundos antes de intentar de nuevo");
+      return false;
+    }
+    setLastAttempt(now);
+    return true;
+  };
+
+  //////////////////////////////////////////
+  // 🔐 LOGIN
   //////////////////////////////////////////
   const login = async () => {
+    if (!canAttempt()) return;
+
     try {
-      const cleanEmail = email.trim();
-      const cleanPassword = password.trim();
+      setLoading(true);
 
-      if (!cleanEmail || !cleanPassword) {
-        alert("Completa todos los campos");
-        return;
-      }
-
-      if (!cleanEmail.includes("@")) {
+      if (!email.includes("@")) {
         alert("Correo inválido");
         return;
       }
 
-      let userCred;
-
-      // 🔥 Intentar login
-      try {
-        userCred = await signInWithEmailAndPassword(
-          auth,
-          cleanEmail,
-          cleanPassword
-        );
-      } catch (err: any) {
-        // 🔥 Si no existe → crear usuario automáticamente
-        if (err.code === "auth/user-not-found") {
-          userCred = await createUserWithEmailAndPassword(
-            auth,
-            cleanEmail,
-            cleanPassword
-          );
-        } else {
-          throw err;
-        }
+      if (password.length < 6) {
+        alert("Mínimo 6 caracteres");
+        return;
       }
 
-      // 🔥 Crear documento en Firestore si no existe
-      const ref = doc(db, COLLECTION, userCred.user.uid);
-      const snap = await getDoc(ref);
-
-      if (!snap.exists()) {
-        await setDoc(ref, {
-          email: userCred.user.email,
-          peso: "",
-          meta: "",
-          racha: 0,
-          progreso: 0,
-          pro: false,
-        });
-      }
+      await signInWithEmailAndPassword(auth, email.trim(), password.trim());
 
       alert("✅ Bienvenido");
     } catch (err: any) {
-      console.error(err);
-
-      if (err.code === "auth/invalid-email") {
-        alert("Correo inválido");
+      if (err.code === "auth/user-not-found") {
+        alert("❌ Usuario no existe");
       } else if (err.code === "auth/wrong-password") {
-        alert("Contraseña incorrecta");
-      } else if (err.code === "auth/email-already-in-use") {
-        alert("Ese correo ya está registrado");
+        alert("❌ Contraseña incorrecta");
+      } else if (err.code === "auth/too-many-requests") {
+        alert("⚠️ Demasiados intentos. Intenta más tarde");
       } else {
         alert("Error: " + err.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   //////////////////////////////////////////
-  // SESIÓN
+  // 🆕 REGISTER
+  //////////////////////////////////////////
+  const register = async () => {
+    if (!canAttempt()) return;
+
+    try {
+      setLoading(true);
+
+      if (!email.includes("@")) {
+        alert("Correo inválido");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Mínimo 6 caracteres");
+        return;
+      }
+
+      const userCred = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password.trim()
+      );
+
+      // 🔥 Crear usuario en Firestore
+      await setDoc(doc(db, COLLECTION, userCred.user.uid), {
+        email: userCred.user.email,
+        peso: "",
+        meta: "",
+        progreso: 0,
+        racha: 0,
+        pro: false,
+      });
+
+      alert("✅ Cuenta creada");
+    } catch (err: any) {
+      if (err.code === "auth/email-already-in-use") {
+        alert("⚠️ Ese correo ya está registrado");
+      } else if (err.code === "auth/too-many-requests") {
+        alert("⚠️ Demasiados intentos. Intenta más tarde");
+      } else {
+        alert("Error: " + err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //////////////////////////////////////////
+  // 🔄 SESIÓN
   //////////////////////////////////////////
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (u) {
         setUser(u);
 
-        const ref = doc(db, COLLECTION, u.uid);
-        const snap = await getDoc(ref);
+        const snap = await getDoc(doc(db, COLLECTION, u.uid));
 
         if (snap.exists()) {
           const data: any = snap.data();
@@ -111,7 +141,6 @@ export default function Home() {
           setMeta(data.meta || "");
           setProgreso(data.progreso || 0);
           setRacha(data.racha || 0);
-          setPro(data.pro || false);
         }
       } else {
         setUser(null);
@@ -122,46 +151,36 @@ export default function Home() {
   }, []);
 
   //////////////////////////////////////////
-  // GUARDAR PROGRESO
+  // 💾 GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
-    try {
-      if (!user) {
-        alert("No hay usuario");
-        return;
-      }
+    if (!user) return;
 
-      const pesoNum = parseFloat(peso);
-      const metaNum = parseFloat(meta);
+    const pesoNum = parseFloat(peso);
+    const metaNum = parseFloat(meta);
 
-      if (isNaN(pesoNum) || isNaN(metaNum)) {
-        alert("Ingresa números válidos");
-        return;
-      }
-
-      const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
-
-      const ref = doc(db, COLLECTION, user.uid);
-
-      await setDoc(
-        ref,
-        {
-          peso,
-          meta,
-          progreso: nuevoProgreso,
-          racha: racha + 1,
-        },
-        { merge: true }
-      );
-
-      setProgreso(nuevoProgreso);
-      setRacha(racha + 1);
-
-      alert("✅ Progreso guardado");
-    } catch (error: any) {
-      console.error(error);
-      alert("❌ Error: " + error.message);
+    if (isNaN(pesoNum) || isNaN(metaNum)) {
+      alert("Valores inválidos");
+      return;
     }
+
+    const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
+
+    await setDoc(
+      doc(db, COLLECTION, user.uid),
+      {
+        peso,
+        meta,
+        progreso: nuevoProgreso,
+        racha: racha + 1,
+      },
+      { merge: true }
+    );
+
+    setProgreso(nuevoProgreso);
+    setRacha(racha + 1);
+
+    alert("✅ Guardado");
   };
 
   //////////////////////////////////////////
@@ -173,9 +192,7 @@ export default function Home() {
         <>
           <input
             style={styles.input}
-            placeholder="Correo electrónico"
-            type="email"
-            autoComplete="email"
+            placeholder="Correo"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -184,62 +201,48 @@ export default function Home() {
             style={styles.input}
             placeholder="Contraseña"
             type="password"
-            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button style={styles.button} onClick={login}>
-            Entrar / Crear cuenta
+          <button style={styles.button} onClick={login} disabled={loading}>
+            Iniciar sesión
+          </button>
+
+          <button style={styles.buttonAlt} onClick={register} disabled={loading}>
+            Crear cuenta
           </button>
         </>
       ) : (
         <>
           <p>👋 {user.email}</p>
 
-          <p style={{ fontSize: "10px", opacity: 0.7 }}>
-            UID: {user.uid}
-          </p>
-
           <button style={styles.logout} onClick={() => signOut(auth)}>
             Cerrar sesión
           </button>
 
           <div style={styles.card}>
-            <h2>📊 Progreso</h2>
-            <p>{progreso.toFixed(0)}%</p>
+            <p>📊 {progreso.toFixed(0)}%</p>
+            <p>🔥 Racha: {racha}</p>
           </div>
 
-          <div style={styles.card}>
-            <h2>🔥 Racha: {racha}</h2>
-          </div>
+          <input
+            style={styles.input}
+            placeholder="Peso"
+            value={peso}
+            onChange={(e) => setPeso(e.target.value)}
+          />
 
-          <div style={styles.card}>
-            <input
-              style={styles.input}
-              placeholder="Peso"
-              value={peso}
-              onChange={(e) => setPeso(e.target.value)}
-            />
+          <input
+            style={styles.input}
+            placeholder="Meta"
+            value={meta}
+            onChange={(e) => setMeta(e.target.value)}
+          />
 
-            <input
-              style={styles.input}
-              placeholder="Meta"
-              value={meta}
-              onChange={(e) => setMeta(e.target.value)}
-            />
-
-            <button style={styles.button} onClick={guardar}>
-              Guardar progreso
-            </button>
-          </div>
-
-          {!pro && (
-            <div style={styles.card}>
-              <h2>💎 Versión PRO</h2>
-              <button style={styles.button}>Comprar PRO</button>
-            </div>
-          )}
+          <button style={styles.button} onClick={guardar}>
+            Guardar progreso
+          </button>
         </>
       )}
     </main>
@@ -258,22 +261,24 @@ const styles: any = {
     padding: "10px",
     margin: "5px 0",
     borderRadius: "8px",
-    border: "none",
   },
   button: {
     width: "100%",
     padding: "10px",
     background: "#22c55e",
-    border: "none",
-    borderRadius: "8px",
-    color: "white",
     marginTop: "10px",
+    borderRadius: "8px",
+  },
+  buttonAlt: {
+    width: "100%",
+    padding: "10px",
+    background: "#3b82f6",
+    marginTop: "10px",
+    borderRadius: "8px",
   },
   logout: {
     background: "red",
     padding: "8px",
-    border: "none",
-    color: "white",
     marginTop: "10px",
   },
   card: {
