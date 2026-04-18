@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { auth, db } from "../@/firebase";
+import { auth, db } from "@/firebase";
 import { doc, setDoc } from "firebase/firestore";
 
 export default function Success() {
