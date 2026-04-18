@@ -48,8 +48,8 @@ const styles: any = {
     justifyContent: "space-around",
     padding: "10px 0",
     borderTop: "1px solid #1e293b",
+    zIndex: 100,
   },
-
   btn: {
     background: "transparent",
     border: "none",
@@ -59,7 +59,6 @@ const styles: any = {
     alignItems: "center",
     fontSize: "12px",
   },
-
   active: {
     background: "transparent",
     border: "none",
