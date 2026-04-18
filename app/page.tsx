@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signOut,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -23,7 +24,7 @@ export default function Home() {
   const [pro, setPro] = useState(false);
 
   //////////////////////////////////////////
-  // LOGIN
+  // LOGIN + REGISTRO AUTOMÁTICO
   //////////////////////////////////////////
   const login = async () => {
     try {
@@ -40,18 +41,35 @@ export default function Home() {
         return;
       }
 
-      const res = await signInWithEmailAndPassword(
-        auth,
-        cleanEmail,
-        cleanPassword
-      );
+      let userCred;
 
-      const ref = doc(db, COLLECTION, res.user.uid);
+      // 🔥 Intentar login
+      try {
+        userCred = await signInWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          cleanPassword
+        );
+      } catch (err: any) {
+        // 🔥 Si no existe → crear usuario automáticamente
+        if (err.code === "auth/user-not-found") {
+          userCred = await createUserWithEmailAndPassword(
+            auth,
+            cleanEmail,
+            cleanPassword
+          );
+        } else {
+          throw err;
+        }
+      }
+
+      // 🔥 Crear documento en Firestore si no existe
+      const ref = doc(db, COLLECTION, userCred.user.uid);
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
         await setDoc(ref, {
-          email: res.user.email,
+          email: userCred.user.email,
           peso: "",
           meta: "",
           racha: 0,
@@ -60,16 +78,16 @@ export default function Home() {
         });
       }
 
-      alert("Login correcto");
+      alert("✅ Bienvenido");
     } catch (err: any) {
       console.error(err);
 
       if (err.code === "auth/invalid-email") {
         alert("Correo inválido");
-      } else if (err.code === "auth/user-not-found") {
-        alert("Usuario no existe");
       } else if (err.code === "auth/wrong-password") {
         alert("Contraseña incorrecta");
+      } else if (err.code === "auth/email-already-in-use") {
+        alert("Ese correo ya está registrado");
       } else {
         alert("Error: " + err.message);
       }
@@ -104,7 +122,7 @@ export default function Home() {
   }, []);
 
   //////////////////////////////////////////
-  // GUARDAR
+  // GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
     try {
@@ -172,7 +190,7 @@ export default function Home() {
           />
 
           <button style={styles.button} onClick={login}>
-            Login
+            Entrar / Crear cuenta
           </button>
         </>
       ) : (
@@ -256,6 +274,7 @@ const styles: any = {
     padding: "8px",
     border: "none",
     color: "white",
+    marginTop: "10px",
   },
   card: {
     background: "#1f2937",
