@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // ✅ navegación profesional
 import { auth, db } from "../lib/firebase";
 import {
   onAuthStateChanged,
@@ -13,6 +14,8 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 const COLLECTION = "usuarios";
 
 export default function Home() {
+  const router = useRouter(); // ✅ inicializar router
+
   const [user, setUser] = useState<any>(null);
 
   const [email, setEmail] = useState("");
@@ -248,10 +251,10 @@ export default function Home() {
             </button>
           </div>
 
-          {/* 🔥 NUEVO BOTÓN */}
+          {/* 🔥 BOTÓN CON ROUTER */}
           <button
             style={styles.primaryBtn}
-            onClick={() => (window.location.href = "/rutinas")}
+            onClick={() => router.push("/rutinas")}
           >
             Ver rutinas
           </button>
@@ -277,6 +280,13 @@ const styles: any = {
   },
   header: { display: "flex", justifyContent: "space-between" },
   title: { fontSize: "24px" },
+
+  authBox: {
+    marginTop: "30px",
+    display: "flex",
+    flexDirection: "column",
+  },
+
   input: {
     padding: "12px",
     borderRadius: "10px",
@@ -285,47 +295,73 @@ const styles: any = {
     border: "none",
     marginTop: "10px",
   },
+
   primaryBtn: {
     padding: "12px",
     background: "#22c55e",
     borderRadius: "10px",
     marginTop: "10px",
+    border: "none",
+    color: "white",
+    fontWeight: "bold",
   },
+
   secondaryBtn: {
     padding: "12px",
     background: "#334155",
     borderRadius: "10px",
     marginTop: "10px",
+    border: "none",
+    color: "white",
   },
-  logout: { background: "red", padding: "8px", borderRadius: "8px" },
+
+  logout: {
+    background: "red",
+    padding: "8px",
+    borderRadius: "8px",
+    border: "none",
+    color: "white",
+  },
+
   card: {
     background: "#1e293b",
     padding: "15px",
     marginTop: "15px",
     borderRadius: "12px",
   },
+
   profileCard: {
     background: "#1e293b",
     padding: "15px",
     borderRadius: "12px",
     marginTop: "15px",
   },
+
   progressCard: {
     background: "#1e293b",
     padding: "15px",
     borderRadius: "12px",
     marginTop: "15px",
   },
+
   progressBar: {
     height: "10px",
     background: "#334155",
     borderRadius: "10px",
+    marginTop: "10px",
   },
+
   progressFill: {
     height: "100%",
     background: "#22c55e",
+    borderRadius: "10px",
   },
-  big: { fontSize: "28px" },
+
+  big: {
+    fontSize: "28px",
+    fontWeight: "bold",
+  },
+
   proCard: {
     background: "linear-gradient(#22c55e,#16a34a)",
     padding: "20px",
