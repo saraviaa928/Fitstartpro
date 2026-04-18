@@ -25,14 +25,15 @@ export default function Home() {
   const [meta, setMeta] = useState("");
   const [progreso, setProgreso] = useState(0);
   const [racha, setRacha] = useState(0);
+  const [pro, setPro] = useState(false);
 
   //////////////////////////////////////////
-  // 🔐 VALIDACIÓN ANTI-SPAM
+  // 🔐 Anti-spam
   //////////////////////////////////////////
   const canAttempt = () => {
     const now = Date.now();
     if (now - lastAttempt < 2000) {
-      alert("⏳ Espera 2 segundos antes de intentar de nuevo");
+      alert("⏳ Espera 2 segundos");
       return false;
     }
     setLastAttempt(now);
@@ -40,7 +41,7 @@ export default function Home() {
   };
 
   //////////////////////////////////////////
-  // 🔐 LOGIN
+  // LOGIN
   //////////////////////////////////////////
   const login = async () => {
     if (!canAttempt()) return;
@@ -48,28 +49,18 @@ export default function Home() {
     try {
       setLoading(true);
 
-      if (!email.includes("@")) {
-        alert("Correo inválido");
-        return;
-      }
-
-      if (password.length < 6) {
-        alert("Mínimo 6 caracteres");
-        return;
-      }
-
       await signInWithEmailAndPassword(auth, email.trim(), password.trim());
 
       alert("✅ Bienvenido");
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
-        alert("❌ Usuario no existe");
+        alert("Usuario no existe");
       } else if (err.code === "auth/wrong-password") {
-        alert("❌ Contraseña incorrecta");
+        alert("Contraseña incorrecta");
       } else if (err.code === "auth/too-many-requests") {
-        alert("⚠️ Demasiados intentos. Intenta más tarde");
+        alert("Demasiados intentos");
       } else {
-        alert("Error: " + err.message);
+        alert(err.message);
       }
     } finally {
       setLoading(false);
@@ -77,7 +68,7 @@ export default function Home() {
   };
 
   //////////////////////////////////////////
-  // 🆕 REGISTER
+  // REGISTER
   //////////////////////////////////////////
   const register = async () => {
     if (!canAttempt()) return;
@@ -85,23 +76,12 @@ export default function Home() {
     try {
       setLoading(true);
 
-      if (!email.includes("@")) {
-        alert("Correo inválido");
-        return;
-      }
-
-      if (password.length < 6) {
-        alert("Mínimo 6 caracteres");
-        return;
-      }
-
       const userCred = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
         password.trim()
       );
 
-      // 🔥 Crear usuario en Firestore
       await setDoc(doc(db, COLLECTION, userCred.user.uid), {
         email: userCred.user.email,
         peso: "",
@@ -114,11 +94,9 @@ export default function Home() {
       alert("✅ Cuenta creada");
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
-        alert("⚠️ Ese correo ya está registrado");
-      } else if (err.code === "auth/too-many-requests") {
-        alert("⚠️ Demasiados intentos. Intenta más tarde");
+        alert("Correo ya registrado");
       } else {
-        alert("Error: " + err.message);
+        alert(err.message);
       }
     } finally {
       setLoading(false);
@@ -126,7 +104,7 @@ export default function Home() {
   };
 
   //////////////////////////////////////////
-  // 🔄 SESIÓN
+  // SESIÓN
   //////////////////////////////////////////
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -141,6 +119,7 @@ export default function Home() {
           setMeta(data.meta || "");
           setProgreso(data.progreso || 0);
           setRacha(data.racha || 0);
+          setPro(data.pro || false);
         }
       } else {
         setUser(null);
@@ -151,7 +130,7 @@ export default function Home() {
   }, []);
 
   //////////////////////////////////////////
-  // 💾 GUARDAR PROGRESO
+  // GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
     if (!user) return;
@@ -186,10 +165,19 @@ export default function Home() {
   //////////////////////////////////////////
   return (
     <main style={styles.container}>
-      <h1>💪 FitStartPro</h1>
+      <div style={styles.header}>
+        <h1 style={styles.title}>FitStartPro</h1>
+        {user && (
+          <button style={styles.logout} onClick={() => signOut(auth)}>
+            Salir
+          </button>
+        )}
+      </div>
 
       {!user ? (
-        <>
+        <div style={styles.authBox}>
+          <h2>Bienvenido 💪</h2>
+
           <input
             style={styles.input}
             placeholder="Correo"
@@ -199,50 +187,75 @@ export default function Home() {
 
           <input
             style={styles.input}
-            placeholder="Contraseña"
             type="password"
+            placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button style={styles.button} onClick={login} disabled={loading}>
+          <button style={styles.primaryBtn} onClick={login} disabled={loading}>
             Iniciar sesión
           </button>
 
-          <button style={styles.buttonAlt} onClick={register} disabled={loading}>
+          <button
+            style={styles.secondaryBtn}
+            onClick={register}
+            disabled={loading}
+          >
             Crear cuenta
           </button>
-        </>
+        </div>
       ) : (
         <>
-          <p>👋 {user.email}</p>
-
-          <button style={styles.logout} onClick={() => signOut(auth)}>
-            Cerrar sesión
-          </button>
-
-          <div style={styles.card}>
-            <p>📊 {progreso.toFixed(0)}%</p>
-            <p>🔥 Racha: {racha}</p>
+          <div style={styles.profileCard}>
+            <p>{user.email}</p>
+            <small>{user.uid}</small>
           </div>
 
-          <input
-            style={styles.input}
-            placeholder="Peso"
-            value={peso}
-            onChange={(e) => setPeso(e.target.value)}
-          />
+          <div style={styles.progressCard}>
+            <h3>Progreso</h3>
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  ...styles.progressFill,
+                  width: `${progreso}%`,
+                }}
+              />
+            </div>
+            <p>{progreso.toFixed(0)}%</p>
+          </div>
 
-          <input
-            style={styles.input}
-            placeholder="Meta"
-            value={meta}
-            onChange={(e) => setMeta(e.target.value)}
-          />
+          <div style={styles.card}>
+            <h3>🔥 Racha</h3>
+            <p style={styles.big}>{racha} días</p>
+          </div>
 
-          <button style={styles.button} onClick={guardar}>
-            Guardar progreso
-          </button>
+          <div style={styles.card}>
+            <input
+              style={styles.input}
+              placeholder="Peso"
+              value={peso}
+              onChange={(e) => setPeso(e.target.value)}
+            />
+
+            <input
+              style={styles.input}
+              placeholder="Meta"
+              value={meta}
+              onChange={(e) => setMeta(e.target.value)}
+            />
+
+            <button style={styles.primaryBtn} onClick={guardar}>
+              Guardar progreso
+            </button>
+          </div>
+
+          {!pro && (
+            <div style={styles.proCard}>
+              <h3>💎 PRO</h3>
+              <p>Desbloquea funciones avanzadas</p>
+            </div>
+          )}
         </>
       )}
     </main>
@@ -252,39 +265,66 @@ export default function Home() {
 const styles: any = {
   container: {
     minHeight: "100vh",
-    background: "#0f172a",
+    background: "linear-gradient(#020617, #0f172a)",
     color: "white",
     padding: "20px",
   },
+  header: { display: "flex", justifyContent: "space-between" },
+  title: { fontSize: "24px" },
   input: {
-    width: "100%",
-    padding: "10px",
-    margin: "5px 0",
-    borderRadius: "8px",
+    padding: "12px",
+    borderRadius: "10px",
+    background: "#1e293b",
+    color: "white",
+    border: "none",
+    marginTop: "10px",
   },
-  button: {
-    width: "100%",
-    padding: "10px",
+  primaryBtn: {
+    padding: "12px",
     background: "#22c55e",
-    marginTop: "10px",
-    borderRadius: "8px",
-  },
-  buttonAlt: {
-    width: "100%",
-    padding: "10px",
-    background: "#3b82f6",
-    marginTop: "10px",
-    borderRadius: "8px",
-  },
-  logout: {
-    background: "red",
-    padding: "8px",
+    borderRadius: "10px",
     marginTop: "10px",
   },
+  secondaryBtn: {
+    padding: "12px",
+    background: "#334155",
+    borderRadius: "10px",
+    marginTop: "10px",
+  },
+  logout: { background: "red", padding: "8px", borderRadius: "8px" },
   card: {
-    background: "#1f2937",
+    background: "#1e293b",
     padding: "15px",
     marginTop: "15px",
+    borderRadius: "12px",
+  },
+  profileCard: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "12px",
+    marginTop: "15px",
+  },
+  progressCard: {
+    background: "#1e293b",
+    padding: "15px",
+    borderRadius: "12px",
+    marginTop: "15px",
+  },
+  progressBar: {
+    height: "10px",
+    background: "#334155",
     borderRadius: "10px",
+  },
+  progressFill: {
+    height: "100%",
+    background: "#22c55e",
+  },
+  big: { fontSize: "28px" },
+  proCard: {
+    background: "linear-gradient(#22c55e,#16a34a)",
+    padding: "20px",
+    marginTop: "20px",
+    borderRadius: "12px",
+    color: "black",
   },
 };
