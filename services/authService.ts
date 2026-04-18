@@ -2,7 +2,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { auth } from "@/firebase";
 
 export const loginUser = (email: string, password: string) => {
   return signInWithEmailAndPassword(auth, email, password);
