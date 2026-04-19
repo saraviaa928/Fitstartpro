@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import useAuth from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
+
 import { loginUser, registerUser } from "@/services/authService";
 import {
   createUserDoc,
@@ -12,8 +14,6 @@ import {
 export default function Home() {
   const user = useAuth();
 
-  const [userData, setUserData]: any = useState(null);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -22,18 +22,26 @@ export default function Home() {
   const [progreso, setProgreso] = useState(0);
   const [racha, setRacha] = useState(0);
 
+  const [loadingPay, setLoadingPay] = useState(false);
+
   //////////////////////////////////////////
   // LOGIN / REGISTER
   //////////////////////////////////////////
   const handleAuth = async () => {
     try {
       const res = await loginUser(email, password);
-      const data = await getUserData(res.user.uid);
-      setUserData(data);
-    } catch {
+
+      const data: any = await getUserData(res.user.uid);
+      if (data) {
+        setPeso(data.peso || "");
+        setMeta(data.meta || "");
+        setProgreso(data.progreso || 0);
+        setRacha(data.racha || 0);
+      }
+    } catch (err: any) {
       const res = await registerUser(email, password);
       await createUserDoc(res.user.uid, email);
-      alert("Cuenta creada");
+      alert("✅ Cuenta creada");
     }
   };
 
@@ -41,13 +49,12 @@ export default function Home() {
   // CARGAR DATOS
   //////////////////////////////////////////
   useEffect(() => {
-    if (!user) return;
+    const loadData = async () => {
+      if (!user) return;
 
-    const load = async () => {
       const data: any = await getUserData(user.uid);
 
       if (data) {
-        setUserData(data);
         setPeso(data.peso || "");
         setMeta(data.meta || "");
         setProgreso(data.progreso || 0);
@@ -55,11 +62,11 @@ export default function Home() {
       }
     };
 
-    load();
+    loadData();
   }, [user]);
 
   //////////////////////////////////////////
-  // GUARDAR
+  // GUARDAR PROGRESO
   //////////////////////////////////////////
   const guardar = async () => {
     if (!user) return;
@@ -72,46 +79,45 @@ export default function Home() {
       return;
     }
 
-    const nuevo = Math.min((pesoNum / metaNum) * 100, 100);
+    const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
 
     await updateUserData(user.uid, {
       peso,
       meta,
-      progreso: nuevo,
+      progreso: nuevoProgreso,
       racha: racha + 1,
     });
 
-    setProgreso(nuevo);
+    setProgreso(nuevoProgreso);
     setRacha(racha + 1);
+
+    alert("✅ Progreso guardado");
   };
 
   //////////////////////////////////////////
-  // PAYPAL
+  // 💳 SUSCRIPCIÓN PAYPAL
   //////////////////////////////////////////
-  const handleSubscribe = async () => {
-    if (!user) {
-      alert("Inicia sesión");
-      return;
+  const suscribirse = async () => {
+    try {
+      setLoadingPay(true);
+
+      const res = await fetch("/api/paypal/create-subscription", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (data.approveUrl) {
+        window.location.href = data.approveUrl;
+      } else {
+        alert("❌ Error al iniciar suscripción");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error PayPal");
+    } finally {
+      setLoadingPay(false);
     }
-
-    const res = await fetch("/api/paypal/create-subscription", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ uid: user.uid }),
-    });
-
-    const data = await res.json();
-
-    const link = data.links?.find((l: any) => l.rel === "approve");
-
-    if (!link) {
-      alert("Error PayPal");
-      return;
-    }
-
-    window.location.href = link.href;
   };
 
   //////////////////////////////////////////
@@ -121,11 +127,12 @@ export default function Home() {
 
       {!user ? (
         <div style={styles.card}>
-          <h2>Login</h2>
+          <h2>Login / Registro</h2>
 
           <input
             style={styles.input}
             placeholder="Correo"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
@@ -133,11 +140,12 @@ export default function Home() {
             style={styles.input}
             type="password"
             placeholder="Contraseña"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <button style={styles.btn} onClick={handleAuth}>
-            Entrar
+            Entrar / Crear cuenta
           </button>
         </div>
       ) : (
@@ -146,25 +154,21 @@ export default function Home() {
             <p>👋 {user.email}</p>
           </div>
 
-          {/* 🔥 PAYWALL */}
-          {!userData?.premium && (
-            <div style={styles.card}>
-              <h3>🔥 Desbloquea PRO</h3>
-              <p>Rutinas + nutrición + seguimiento completo</p>
+          {/* 🔥 PREMIUM */}
+          <div style={styles.card}>
+            <h3>🔥 Desbloquea PRO</h3>
 
-              <button style={styles.btnPremium} onClick={handleSubscribe}>
-                💳 Empieza GRATIS 3 días
-              </button>
-            </div>
-          )}
+            <button style={styles.btn} onClick={suscribirse}>
+              {loadingPay ? "Cargando..." : "💳 Empieza GRATIS 3 días"}
+            </button>
+          </div>
 
-          {/* ✅ CONTENIDO (SIEMPRE VISIBLE PERO LIMITADO) */}
           <div style={styles.card}>
             <h3>📊 Progreso</h3>
-            <div style={styles.bar}>
+            <div style={styles.progressBar}>
               <div
                 style={{
-                  ...styles.fill,
+                  ...styles.progressFill,
                   width: `${progreso}%`,
                 }}
               />
@@ -198,24 +202,26 @@ export default function Home() {
           </div>
         </>
       )}
+
+      <Navbar />
     </main>
   );
 }
 
-//////////////////////////////////////////
+//////////////////////////////////////////////////
 // 🎨 ESTILOS
-//////////////////////////////////////////
-
+//////////////////////////////////////////////////
 const styles: any = {
   container: {
     minHeight: "100vh",
-    background: "#020617",
+    background: "linear-gradient(#020617, #0f172a)",
     color: "white",
     padding: "20px",
+    paddingBottom: "80px",
   },
 
   title: {
-    fontSize: "24px",
+    fontSize: "26px",
     fontWeight: "bold",
   },
 
@@ -228,10 +234,12 @@ const styles: any = {
 
   input: {
     width: "100%",
-    padding: "10px",
-    marginTop: "10px",
-    borderRadius: "8px",
+    padding: "12px",
+    borderRadius: "10px",
     border: "none",
+    marginTop: "10px",
+    background: "#0f172a",
+    color: "white",
   },
 
   btn: {
@@ -239,36 +247,27 @@ const styles: any = {
     padding: "12px",
     marginTop: "10px",
     background: "#22c55e",
-    border: "none",
     borderRadius: "10px",
+    border: "none",
     color: "white",
-  },
-
-  btnPremium: {
-    width: "100%",
-    padding: "12px",
-    marginTop: "10px",
-    background: "#f59e0b",
-    border: "none",
-    borderRadius: "10px",
-    color: "black",
     fontWeight: "bold",
   },
 
-  bar: {
+  progressBar: {
     height: "10px",
     background: "#334155",
     borderRadius: "10px",
     marginTop: "10px",
   },
 
-  fill: {
+  progressFill: {
     height: "100%",
     background: "#22c55e",
     borderRadius: "10px",
   },
 
   big: {
-    fontSize: "26px",
+    fontSize: "28px",
+    fontWeight: "bold",
   },
 };
