@@ -6,8 +6,7 @@ export default function useAuth() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
+    return onAuthStateChanged(auth, setUser);
   }, []);
 
   return user;
