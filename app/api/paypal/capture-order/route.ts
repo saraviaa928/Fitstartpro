@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { captureOrder } from "@/paypal";
+import { captureOrder } from "@/lib/paypal";
 import { db } from "@/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 
