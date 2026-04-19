@@ -17,39 +17,31 @@ async function getToken() {
     body: "grant_type=client_credentials",
   });
 
-  return (await res.json()).access_token;
+  const data = await res.json();
+  return data.access_token;
 }
 
-export async function createOrder(value: string) {
+// 🔥 CREAR SUSCRIPCIÓN
+export async function createSubscription(planId: string, uid: string) {
   const token = await getToken();
 
-  const res = await fetch(`${base}/v2/checkout/orders`, {
+  const res = await fetch(`${base}/v1/billing/subscriptions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      intent: "CAPTURE",
-      purchase_units: [{ amount: { currency_code: "USD", value } }],
+      plan_id: planId,
+      custom_id: uid,
+      application_context: {
+        brand_name: "FitStartPro",
+        user_action: "SUBSCRIBE_NOW",
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/`,
+      },
     }),
   });
-
-  return res.json();
-}
-
-export async function captureOrder(orderId: string) {
-  const token = await getToken();
-
-  const res = await fetch(
-    `${base}/v2/checkout/orders/${orderId}/capture`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
 
   return res.json();
 }
