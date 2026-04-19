@@ -52,4 +52,4 @@ export async function captureOrder(orderId: string) {
   );
 
   return res.json();
-}
+} 
