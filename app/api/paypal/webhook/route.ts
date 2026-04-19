@@ -5,8 +5,6 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 export async function POST(req: Request) {
   const body = await req.json();
 
-  console.log("🔥 WEBHOOK:", body);
-
   const event = body.event_type;
   const resource = body.resource;
   const uid = resource?.custom_id;
@@ -15,7 +13,6 @@ export async function POST(req: Request) {
 
   const ref = doc(db, "usuarios", uid);
 
-  // ✅ ACTIVAR PRO
   if (event === "BILLING.SUBSCRIPTION.ACTIVATED") {
     await updateDoc(ref, {
       premium: true,
@@ -26,7 +23,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // ❌ CANCELAR
   if (event === "BILLING.SUBSCRIPTION.CANCELLED") {
     await updateDoc(ref, {
       premium: false,
