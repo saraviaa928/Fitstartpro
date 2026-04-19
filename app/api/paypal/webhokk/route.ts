@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { db } from "@/firebase";
+import { db } from "@/lib/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 export async function POST(req: Request) {
   const body = await req.json();
+
+  console.log("🔥 WEBHOOK:", body);
 
   const event = body.event_type;
   const resource = body.resource;
@@ -13,18 +15,16 @@ export async function POST(req: Request) {
 
   const ref = doc(db, "usuarios", uid);
 
-  // 🔥 ACTIVAR
   if (event === "BILLING.SUBSCRIPTION.ACTIVATED") {
     await updateDoc(ref, {
       premium: true,
-      plan: "pro",
       status: "active",
+      plan: "pro",
       subscriptionId: resource.id,
       premiumSince: serverTimestamp(),
     });
   }
 
-  // 🔴 CANCELAR
   if (event === "BILLING.SUBSCRIPTION.CANCELLED") {
     await updateDoc(ref, {
       premium: false,
