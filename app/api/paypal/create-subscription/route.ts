@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { createSubscription } from "@/lib/paypal";
 
-export async function POST(req: Request) {
-  const { uid } = await req.json();
+export async function POST() {
+  try {
+    const approveUrl = await createSubscription();
 
-  const data = await createSubscription(uid);
-
-  return NextResponse.json(data);
+    return NextResponse.json({ approveUrl });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Error creando suscripción" },
+      { status: 500 }
+    );
+  }
 }
