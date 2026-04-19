@@ -4,16 +4,8 @@ import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 export const createUserDoc = async (uid: string, email: string) => {
   await setDoc(doc(db, "usuarios", uid), {
     email,
-    peso: "",
-    meta: "",
-    progreso: 0,
-    racha: 0,
-
-    // SaaS
     premium: false,
-    status: "inactive",
-    plan: "free",
-    subscriptionId: null,
+    createdAt: new Date(),
   });
 };
 
