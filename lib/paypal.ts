@@ -21,7 +21,6 @@ async function getToken() {
   return data.access_token;
 }
 
-// 🔥 CREAR SUSCRIPCIÓN
 export async function createSubscription(planId: string, uid: string) {
   const token = await getToken();
 
