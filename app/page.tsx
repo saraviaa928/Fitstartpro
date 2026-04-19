@@ -1,39 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { loginUser, registerUser } from "@/services/authService";
-import {
-  createUserDoc,
-  getUserData,
-  updateUserData,
-} from "@/services/userService";
+import { createUserDoc, getUserData } from "@/services/userService";
 
 export default function Home() {
   const user = useAuth();
+  const [userData, setUserData]: any = useState(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [peso, setPeso] = useState("");
-  const [meta, setMeta] = useState("");
-  const [progreso, setProgreso] = useState(0);
-  const [racha, setRacha] = useState(0);
+  useEffect(() => {
+    if (!user) return;
 
-  const [premium, setPremium] = useState(false);
+    getUserData(user.uid).then(setUserData);
+  }, [user]);
 
   const handleAuth = async () => {
     try {
       const res = await loginUser(email, password);
-      const data: any = await getUserData(res.user.uid);
-
-      if (data) {
-        setPeso(data.peso);
-        setMeta(data.meta);
-        setProgreso(data.progreso);
-        setRacha(data.racha);
-        setPremium(data.premium);
-      }
+      const data = await getUserData(res.user.uid);
+      setUserData(data);
     } catch {
       const res = await registerUser(email, password);
       await createUserDoc(res.user.uid, email);
@@ -41,84 +30,47 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-
-    getUserData(user.uid).then((data: any) => {
-      if (data) {
-        setPeso(data.peso);
-        setMeta(data.meta);
-        setProgreso(data.progreso);
-        setRacha(data.racha);
-        setPremium(data.premium);
-      }
-    });
-  }, [user]);
-
-  const guardar = async () => {
-    if (!user) return;
-
-    const p = parseFloat(peso);
-    const m = parseFloat(meta);
-
-    if (isNaN(p) || isNaN(m)) return alert("Valores inválidos");
-
-    const prog = Math.min((p / m) * 100, 100);
-
-    await updateUserData(user.uid, {
-      peso,
-      meta,
-      progreso: prog,
-      racha: racha + 1,
-    });
-
-    setProgreso(prog);
-    setRacha(racha + 1);
-  };
-
-  const suscribirse = async () => {
+  const handleSubscribe = async () => {
     const res = await fetch("/api/paypal/create-subscription", {
       method: "POST",
       body: JSON.stringify({ uid: user.uid }),
     });
 
     const data = await res.json();
-    window.location.href = data.approve;
+    window.location.href = data.links.find((l: any) => l.rel === "approve").href;
   };
 
   return (
-    <main style={{ padding: 20, color: "white" }}>
-      <h1>💪 FitStartPro</h1>
-
+    <main style={{ padding: 20 }}>
       {!user ? (
         <>
-          <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
           <input
-            type="password"
+            placeholder="correo"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
             placeholder="password"
+            type="password"
             onChange={(e) => setPassword(e.target.value)}
           />
           <button onClick={handleAuth}>Entrar</button>
         </>
       ) : (
         <>
-          <p>{user.email}</p>
+          <h2>{user.email}</h2>
 
-          {!premium && (
-            <button onClick={suscribirse}>
-              💳 Suscribirme $4.99
-            </button>
+          {!userData?.premium ? (
+            <div>
+              <h3>🔥 Desbloquea PRO</h3>
+              <button onClick={handleSubscribe}>
+                💳 Empieza GRATIS 3 días
+              </button>
+            </div>
+          ) : (
+            <div>
+              <h3>💎 PRO ACTIVO</h3>
+            </div>
           )}
-
-          {premium && <p>🔥 PRO ACTIVO</p>}
-
-          <input placeholder="peso" onChange={(e) => setPeso(e.target.value)} />
-          <input placeholder="meta" onChange={(e) => setMeta(e.target.value)} />
-
-          <button onClick={guardar}>Guardar</button>
-
-          <p>Progreso: {progreso}%</p>
-          <p>Racha: {racha}</p>
         </>
       )}
     </main>
