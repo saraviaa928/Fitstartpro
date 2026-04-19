@@ -13,8 +13,12 @@ export const createUserDoc = (uid: string, email: string) =>
     meta: "",
     progreso: 0,
     racha: 0,
+
+    // 🔥 SaaS
     premium: false,
     plan: "free",
+    status: "inactive",
+    subscriptionId: null,
   });
 
 export const getUserData = async (uid: string) => {
