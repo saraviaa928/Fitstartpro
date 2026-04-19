@@ -15,6 +15,7 @@ export async function POST(req: Request) {
 
   const ref = doc(db, "usuarios", uid);
 
+  // ✅ ACTIVAR PRO
   if (event === "BILLING.SUBSCRIPTION.ACTIVATED") {
     await updateDoc(ref, {
       premium: true,
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     });
   }
 
+  // ❌ CANCELAR
   if (event === "BILLING.SUBSCRIPTION.CANCELLED") {
     await updateDoc(ref, {
       premium: false,
