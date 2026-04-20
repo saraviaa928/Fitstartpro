@@ -1,24 +1,27 @@
 "use client";
 
 import { useEffect } from "react";
-import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { getAuth } from "firebase/auth";
 
 export default function Success() {
   useEffect(() => {
-    const activarPro = async () => {
-      const user = auth.currentUser;
+    const activatePro = async () => {
+      const user = getAuth().currentUser;
+
       if (!user) return;
 
-      await setDoc(
-        doc(db, "usuarios", user.uid),
-        { pro: true },
-        { merge: true }
-      );
+      const ref = doc(db, "usuarios", user.uid);
+
+      await updateDoc(ref, {
+        pro: true,
+        updatedAt: new Date(),
+      });
     };
 
-    activarPro();
+    activatePro();
   }, []);
 
-  return <h1>Pago exitoso 🎉 PRO activado</h1>;
+  return <h1>🔥 Suscripción activada</h1>;
 }
