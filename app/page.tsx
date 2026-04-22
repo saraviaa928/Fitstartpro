@@ -1,105 +1,65 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import useAuth from "@/hooks/useAuth";
-import Navbar from "@/components/Navbar";
-
-import { loginUser, registerUser } from "@/services/authService";
-import {
-  createUserDoc,
-  getUserData,
-  updateUserData,
-} from "@/services/userService";
+import { useEffect, useState } from "react";
+import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function Home() {
-  const user = useAuth();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
+  const [user, setUser] = useState<User | null>(null);
   const [peso, setPeso] = useState("");
   const [meta, setMeta] = useState("");
-  const [progreso, setProgreso] = useState(0);
-  const [racha, setRacha] = useState(0);
-
-  const [loadingPay, setLoadingPay] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   //////////////////////////////////////////
-  // LOGIN / REGISTER
-  //////////////////////////////////////////
-  const handleAuth = async () => {
-    try {
-      const res = await loginUser(email, password);
-
-      const data: any = await getUserData(res.user.uid);
-      if (data) {
-        setPeso(data.peso || "");
-        setMeta(data.meta || "");
-        setProgreso(data.progreso || 0);
-        setRacha(data.racha || 0);
-      }
-    } catch (err: any) {
-      const res = await registerUser(email, password);
-      await createUserDoc(res.user.uid, email);
-      alert("✅ Cuenta creada");
-    }
-  };
-
-  //////////////////////////////////////////
-  // CARGAR DATOS
+  // 🔐 AUTH
   //////////////////////////////////////////
   useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
 
-      const data: any = await getUserData(user.uid);
-
-      if (data) {
-        setPeso(data.peso || "");
-        setMeta(data.meta || "");
-        setProgreso(data.progreso || 0);
-        setRacha(data.racha || 0);
-      }
-    };
-
-    loadData();
-  }, [user]);
+    return () => unsubscribe();
+  }, []);
 
   //////////////////////////////////////////
-  // GUARDAR PROGRESO
+  // 💾 GUARDAR PROGRESO
   //////////////////////////////////////////
-  const guardar = async () => {
-    if (!user) return;
-
-    const pesoNum = parseFloat(peso);
-    const metaNum = parseFloat(meta);
-
-    if (isNaN(pesoNum) || isNaN(metaNum)) {
-      alert("Valores inválidos");
+  const guardarProgreso = async () => {
+    if (!user) {
+      alert("Debes iniciar sesión");
       return;
     }
 
-    const nuevoProgreso = Math.min((pesoNum / metaNum) * 100, 100);
+    try {
+      setSaving(true);
 
-    await updateUserData(user.uid, {
-      peso,
-      meta,
-      progreso: nuevoProgreso,
-      racha: racha + 1,
-    });
+      await setDoc(
+        doc(db, "usuarios", user.uid),
+        {
+          peso,
+          meta,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
 
-    setProgreso(nuevoProgreso);
-    setRacha(racha + 1);
-
-    alert("✅ Progreso guardado");
+      alert("Progreso guardado ✅");
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar");
+    } finally {
+      setSaving(false);
+    }
   };
 
   //////////////////////////////////////////
-  // 💳 SUSCRIPCIÓN PAYPAL
+  // 💳 PAYPAL SUSCRIPCIÓN (CON DEBUG)
   //////////////////////////////////////////
-  const suscribirse = async () => {
+  const handleSubscribe = async () => {
     try {
-      setLoadingPay(true);
+      setLoading(true);
 
       const res = await fetch("/api/paypal/create-subscription", {
         method: "POST",
@@ -107,167 +67,94 @@ export default function Home() {
 
       const data = await res.json();
 
-      if (data.approveUrl) {
-        window.location.href = data.approveUrl;
-      } else {
-        alert("❌ Error al iniciar suscripción");
+      // 🔥 DEBUG REAL
+      console.log("PAYPAL ERROR REAL:", data);
+
+      const approvalUrl = data?.links?.find(
+        (l: any) => l.rel === "approve"
+      )?.href;
+
+      if (!approvalUrl) {
+        alert("Error al iniciar suscripción. Revisa consola.");
+        return;
       }
+
+      window.location.href = approvalUrl;
     } catch (error) {
-      console.error(error);
-      alert("❌ Error PayPal");
+      console.error("ERROR FRONT:", error);
+      alert("Error al iniciar suscripción");
     } finally {
-      setLoadingPay(false);
+      setLoading(false);
     }
   };
 
   //////////////////////////////////////////
   return (
-    <main style={styles.container}>
-      <h1 style={styles.title}>💪 FitStartPro</h1>
+    <main
+      style={{
+        padding: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 15,
+        maxWidth: 400,
+        margin: "0 auto",
+      }}
+    >
+      <h1>💪 FitStartPro</h1>
 
-      {!user ? (
-        <div style={styles.card}>
-          <h2>Login / Registro</h2>
-
-          <input
-            style={styles.input}
-            placeholder="Correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button style={styles.btn} onClick={handleAuth}>
-            Entrar / Crear cuenta
-          </button>
-        </div>
+      {/* 👤 USUARIO */}
+      {user ? (
+        <p>Bienvenido: {user.email}</p>
       ) : (
-        <>
-          <div style={styles.card}>
-            <p>👋 {user.email}</p>
-          </div>
-
-          {/* 🔥 PREMIUM */}
-          <div style={styles.card}>
-            <h3>🔥 Desbloquea PRO</h3>
-
-            <button style={styles.btn} onClick={suscribirse}>
-              {loadingPay ? "Cargando..." : "💳 Empieza GRATIS 3 días"}
-            </button>
-          </div>
-
-          <div style={styles.card}>
-            <h3>📊 Progreso</h3>
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  ...styles.progressFill,
-                  width: `${progreso}%`,
-                }}
-              />
-            </div>
-            <p>{progreso.toFixed(0)}%</p>
-          </div>
-
-          <div style={styles.card}>
-            <h3>🔥 Racha</h3>
-            <p style={styles.big}>{racha} días</p>
-          </div>
-
-          <div style={styles.card}>
-            <input
-              style={styles.input}
-              placeholder="Peso"
-              value={peso}
-              onChange={(e) => setPeso(e.target.value)}
-            />
-
-            <input
-              style={styles.input}
-              placeholder="Meta"
-              value={meta}
-              onChange={(e) => setMeta(e.target.value)}
-            />
-
-            <button style={styles.btn} onClick={guardar}>
-              Guardar progreso
-            </button>
-          </div>
-        </>
+        <p>No has iniciado sesión</p>
       )}
 
-      <Navbar />
+      {/* 💳 BOTÓN PRO */}
+      <button
+        onClick={handleSubscribe}
+        disabled={loading}
+        style={{
+          padding: 10,
+          borderRadius: 8,
+          border: "none",
+          background: "#28a745",
+          color: "#fff",
+          fontWeight: "bold",
+          cursor: "pointer",
+        }}
+      >
+        {loading ? "Procesando..." : "💳 Empieza GRATIS 3 días"}
+      </button>
+
+      {/* 📊 INPUTS */}
+      <input
+        placeholder="peso"
+        value={peso}
+        onChange={(e) => setPeso(e.target.value)}
+        style={{ padding: 10 }}
+      />
+
+      <input
+        placeholder="meta"
+        value={meta}
+        onChange={(e) => setMeta(e.target.value)}
+        style={{ padding: 10 }}
+      />
+
+      {/* 💾 GUARDAR */}
+      <button
+        onClick={guardarProgreso}
+        disabled={saving}
+        style={{
+          padding: 10,
+          borderRadius: 8,
+          border: "none",
+          background: "#0070f3",
+          color: "#fff",
+        }}
+      >
+        {saving ? "Guardando..." : "Guardar progreso"}
+      </button>
     </main>
   );
 }
-
-//////////////////////////////////////////////////
-// 🎨 ESTILOS
-//////////////////////////////////////////////////
-const styles: any = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(#020617, #0f172a)",
-    color: "white",
-    padding: "20px",
-    paddingBottom: "80px",
-  },
-
-  title: {
-    fontSize: "26px",
-    fontWeight: "bold",
-  },
-
-  card: {
-    background: "#1e293b",
-    padding: "15px",
-    marginTop: "15px",
-    borderRadius: "12px",
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
-    marginTop: "10px",
-    background: "#0f172a",
-    color: "white",
-  },
-
-  btn: {
-    width: "100%",
-    padding: "12px",
-    marginTop: "10px",
-    background: "#22c55e",
-    borderRadius: "10px",
-    border: "none",
-    color: "white",
-    fontWeight: "bold",
-  },
-
-  progressBar: {
-    height: "10px",
-    background: "#334155",
-    borderRadius: "10px",
-    marginTop: "10px",
-  },
-
-  progressFill: {
-    height: "100%",
-    background: "#22c55e",
-    borderRadius: "10px",
-  },
-
-  big: {
-    fontSize: "28px",
-    fontWeight: "bold",
-  },
-};
