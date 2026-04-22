@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [peso, setPeso] = useState("");
   const [meta, setMeta] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 🔹 Cargar progreso guardado
+  useEffect(() => {
+    const savedPeso = localStorage.getItem("peso");
+    const savedMeta = localStorage.getItem("meta");
+
+    if (savedPeso) setPeso(savedPeso);
+    if (savedMeta) setMeta(savedMeta);
+  }, []);
+
+  // 🔹 Guardar progreso
+  const guardar = () => {
+    localStorage.setItem("peso", peso);
+    localStorage.setItem("meta", meta);
+    alert("Progreso guardado ✅");
+  };
+
+  // 🔥 BOTÓN PAYPAL CORREGIDO
   const handleSubscribe = async () => {
     try {
       setLoading(true);
@@ -19,61 +36,61 @@ export default function Home() {
 
       console.log("PAYPAL RESPONSE:", data);
 
-      // 🔥 SI HAY LINK → REDIRIGE
-      if (data?.links) {
-        const approve = data.links.find(
-          (link: any) => link.rel === "approve"
-        );
-
-        if (approve) {
-          window.location.href = approve.href;
-          return;
-        }
+      // 🔴 Validación fuerte
+      if (!data || !data.links) {
+        alert("Error: PayPal no respondió correctamente");
+        return;
       }
 
-      // ❌ ERROR REAL
-      alert("Error al iniciar suscripción");
-      console.error("ERROR:", data);
+      const approveLink = data.links.find(
+        (link: any) => link.rel === "approve"
+      );
+
+      if (!approveLink) {
+        alert("Error: no se encontró enlace de pago");
+        return;
+      }
+
+      // 🚀 REDIRECCIÓN REAL
+      window.location.href = approveLink.href;
 
     } catch (error) {
-      console.error("ERROR FRONT:", error);
-      alert("Error inesperado");
+      console.error("ERROR REAL:", error);
+      alert("Error al iniciar suscripción");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGuardar = () => {
-    alert(`Peso: ${peso} - Meta: ${meta}`);
   };
 
   return (
     <main style={{ padding: 20 }}>
       <h1>💪 FitStartPro</h1>
 
-      {/* 🔥 BOTÓN SUSCRIPCIÓN */}
+      {/* 🔥 BOTÓN PREMIUM */}
+      <h2>🔥 Desbloquea PRO</h2>
+
       <button onClick={handleSubscribe} disabled={loading}>
         {loading ? "Cargando..." : "💳 Empieza GRATIS 3 días"}
       </button>
 
       <br /><br />
 
-      {/* 🔥 PROGRESO (NO LO PERDEMOS) */}
+      {/* 📊 PROGRESO */}
       <input
         placeholder="peso"
         value={peso}
         onChange={(e) => setPeso(e.target.value)}
+        style={{ display: "block", marginBottom: 10 }}
       />
 
       <input
         placeholder="meta"
         value={meta}
         onChange={(e) => setMeta(e.target.value)}
+        style={{ display: "block", marginBottom: 10 }}
       />
 
-      <button onClick={handleGuardar}>
-        Guardar
-      </button>
+      <button onClick={guardar}>Guardar</button>
     </main>
   );
 }
