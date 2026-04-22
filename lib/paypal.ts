@@ -1,10 +1,10 @@
-const BASE =
+const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 
 async function getAccessToken() {
-  const res = await fetch(`${BASE}/v1/oauth2/token`, {
+  const res = await fetch(`${BASE_URL}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization:
@@ -21,7 +21,7 @@ async function getAccessToken() {
 
   if (!data.access_token) {
     console.error("TOKEN ERROR:", data);
-    throw new Error("No se pudo obtener token");
+    throw new Error("No token");
   }
 
   return data.access_token;
@@ -30,7 +30,7 @@ async function getAccessToken() {
 export async function createSubscription(planId: string) {
   const token = await getAccessToken();
 
-  const res = await fetch(`${BASE}/v1/billing/subscriptions`, {
+  const res = await fetch(`${BASE_URL}/v1/billing/subscriptions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -49,7 +49,7 @@ export async function createSubscription(planId: string) {
 
   if (!res.ok) {
     console.error("PAYPAL ERROR:", data);
-    throw new Error("Error creando suscripción");
+    throw new Error("PayPal falló");
   }
 
   return data;
