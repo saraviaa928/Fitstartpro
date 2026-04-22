@@ -1,56 +1,47 @@
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID!;
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET!;
+const BASE = "https://api-m.sandbox.paypal.com";
 
 async function getAccessToken() {
-  const res = await fetch(`${BASE_URL}/v1/oauth2/token`, {
+  const res = await fetch(`${BASE}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       Authorization:
         "Basic " +
-        Buffer.from(
-          `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
-        ).toString("base64"),
+        Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_SECRET}`).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: "grant_type=client_credentials",
   });
 
   const data = await res.json();
-
-  if (!data.access_token) {
-    console.error("TOKEN ERROR:", data);
-    throw new Error("No token");
-  }
-
   return data.access_token;
 }
 
-export async function createSubscription(planId: string) {
-  const token = await getAccessToken();
+// 🔥 CREAR SUSCRIPCIÓN REAL
+export async function createSubscription() {
+  const accessToken = await getAccessToken();
 
-  const res = await fetch(`${BASE_URL}/v1/billing/subscriptions`, {
+  const res = await fetch(`${BASE}/v1/billing/subscriptions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
-      plan_id: planId,
+      plan_id: process.env.PAYPAL_PLAN_ID, // 👈 IMPORTANTE
       application_context: {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+        brand_name: "FitStartPro",
+        user_action: "SUBSCRIBE_NOW",
+        return_url: "https://fitstartpro.vercel.app/succes",
+        cancel_url: "https://fitstartpro.vercel.app",
       },
     }),
   });
 
   const data = await res.json();
 
-  if (!res.ok) {
-    console.error("PAYPAL ERROR:", data);
-    throw new Error("PayPal falló");
-  }
+  console.log("PAYPAL BACK RESPONSE:", data); // 👈 CLAVE
 
   return data;
 }
